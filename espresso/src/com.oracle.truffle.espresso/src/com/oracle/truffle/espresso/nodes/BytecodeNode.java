@@ -390,6 +390,11 @@ import com.oracle.truffle.espresso.classfile.ConstantPool;
 import com.oracle.truffle.espresso.classfile.ExceptionHandler;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InstructionTypeArgumentsAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeLookupSwitch;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeSwitch;
@@ -845,6 +850,25 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         int top = startTop;
         int startReifiedTypes = startingReifiedTypesOffset(getMethodVersion().getMaxLocals());
         CompilerAsserts.partialEvaluationConstant(startReifiedTypes);
+
+        //get and print the method attributes(if not all null)
+        MethodTypeParameterCountAttribute methodTypeParameterCount = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
+        InstructionTypeArgumentsAttribute instructionTypeArguments = methodVersion.getMethod().getInstructionTypeArgumentsAttribute();
+        MethodParameterTypeAttribute methodParameterType = methodVersion.getMethod().getMethodParameterTypeAttribute();
+        InvokeReturnTypeAttribute invokeReturnType = methodVersion.getMethod().getInvokeReturnTypeAttribute();
+        MethodReturnTypeAttribute methodReturnType = methodVersion.getMethod().getMethodReturnTypeAttribute();
+        if (methodTypeParameterCount != null ||
+            instructionTypeArguments != null ||
+            methodParameterType != null ||
+            invokeReturnType != null ||
+            methodReturnType != null) {
+                System.out.println("in executeBodyFromBCI ~ Method: " + methodVersion.getMethod().getName());
+                System.out.println("MethodTypeParameterCountAttribute: " + methodTypeParameterCount);
+                System.out.println("InstructionTypeArgumentsAttribute: " + instructionTypeArguments);
+                System.out.println("MethodParameterTypeAttribute: " + methodParameterType);
+                System.out.println("InvokeReturnTypeAttribute: " + invokeReturnType);
+                System.out.println("MethodReturnTypeAttribute: " + methodReturnType);
+        }
 
         if (instrument != null) {
             if (resumeContinuation) {

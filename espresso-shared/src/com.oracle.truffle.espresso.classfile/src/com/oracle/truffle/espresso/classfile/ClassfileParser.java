@@ -88,6 +88,32 @@ import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceDebugExtensionAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.StackMapTableAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InstructionTypeArgumentsAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
+import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.ClassMethodRefConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.DoubleConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.DynamicConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.FloatConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.ImmutablePoolConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.IntegerConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.InterfaceMethodRefConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.InvalidConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.InvokeDynamicConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.LongConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.MethodHandleConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.MethodTypeConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.NameAndTypeConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.PoolConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.StringConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.Utf8Constant;
 import com.oracle.truffle.espresso.classfile.descriptors.ByteSequence;
 import com.oracle.truffle.espresso.classfile.descriptors.ModifiedUTF8;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
@@ -1074,6 +1100,12 @@ public final class ClassfileParser {
 
         CodeAttribute codeAttribute = null;
         Attribute checkedExceptions = null;
+        //newly added attributes
+        MethodTypeParameterCountAttribute methodTypeParameterCount = null;
+        InstructionTypeArgumentsAttribute instructionTypeArguments = null;
+        MethodParameterTypeAttribute methodParameterType = null;
+        InvokeReturnTypeAttribute invokeReturnType = null;
+        MethodReturnTypeAttribute methodReturnType = null;
 
         CommonAttributeParser commonAttributeParser = new CommonAttributeParser(InfoType.Method);
 
@@ -1099,6 +1131,31 @@ public final class ClassfileParser {
             } else if (attributeName.equals(ParserNames.Synthetic)) {
                 methodFlags |= ACC_SYNTHETIC;
                 methodAttributes[i] = checkedExceptions = Attribute.SYNTHETIC;
+            }else if (attributeName.equals(ParserNames.MethodTypeParameterCount)){
+                if (methodTypeParameterCount != null) {
+                    throw classFormatError("Duplicate MethodTypeParameterCount attribute");
+                }
+                methodAttributes[i] = methodTypeParameterCount = parseMethodTypeParameterCount(attributeName);
+            } else if (attributeName.equals(ParserNames.InstructionTypeArguments)){
+                if (instructionTypeArguments != null){
+                    throw classFormatError("Duplicate InstructionTypeArguments attribute");
+                }
+                methodAttributes[i] = instructionTypeArguments = parseInstructionTypeArguments(attributeName);
+            } else if (attributeName.equals(ParserNames.MethodParameterType)){
+                if (methodParameterType != null){
+                    throw classFormatError("Duplicate MethodParameterType attribute");
+                }
+                methodAttributes[i] = methodParameterType = parseMethodParameterType(attributeName);
+            } else if (attributeName.equals(ParserNames.InvokeReturnType)){
+                if (invokeReturnType != null){
+                    throw classFormatError("Duplicate InvokeReturnType attribute");
+                }
+                methodAttributes[i] = invokeReturnType = parseInvokeReturnType(attributeName);
+            } else if (attributeName.equals(ParserNames.MethodReturnType)){
+                if (methodReturnType != null){
+                    throw classFormatError("Duplicate MethodReturnType attribute");
+                }
+                methodAttributes[i] = methodReturnType = parseMethodReturnType(attributeName);
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (attributeName.equals(ParserNames.RuntimeVisibleAnnotations)) {
                     RuntimeVisibleAnnotationsAttribute annotations = commonAttributeParser.parseRuntimeVisibleAnnotations(attributeSize, AnnotationLocation.Method);
@@ -1224,6 +1281,8 @@ public final class ClassfileParser {
         InnerClassesAttribute innerClasses = null;
         PermittedSubclassesAttribute permittedSubclasses = null;
         RecordAttribute record = null;
+        //newly added class attribute
+        ClassTypeParameterCountAttribute classTypeParameterCount = null;
 
         CommonAttributeParser commonAttributeParser = new CommonAttributeParser(InfoType.Class);
 
@@ -1251,6 +1310,11 @@ public final class ClassfileParser {
                     throw classFormatError("Duplicate InnerClasses attribute");
                 }
                 classAttributes[i] = innerClasses = parseInnerClasses(attributeName);
+            } else if (attributeName.equals(ParserNames.ClassTypeParameterCount)){
+                if (classTypeParameterCount != null) {
+                    throw classFormatError("Duplicate ClassTypeParameterCount attribute");
+                }
+                classAttributes[i] = classTypeParameterCount = parseClassTypeParameterCount(attributeName);
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (majorVersion >= JAVA_7_VERSION && attributeName.equals(ParserNames.BootstrapMethods)) {
                     if (bootstrapMethods != null) {
@@ -1335,6 +1399,87 @@ public final class ClassfileParser {
             // this isn't critical, so we'll just mark as null
         }
         return new SourceDebugExtensionAttribute(name, debugExtension);
+    }
+
+    private MethodTypeParameterCountAttribute parseMethodTypeParameterCount(Symbol<Name> name) {
+        assert ParserNames.MethodTypeParameterCount.equals(name);
+        int count = stream.readU2();
+        return new MethodTypeParameterCountAttribute(name, count);
+    }
+
+    private ClassTypeParameterCountAttribute parseClassTypeParameterCount(Symbol<Name> name) {
+        assert ParserNames.ClassTypeParameterCount.equals(name);
+        int count = stream.readU2();
+        return new ClassTypeParameterCountAttribute(name, count);
+    }
+
+    private InstructionTypeArgumentsAttribute parseInstructionTypeArguments(Symbol<Name> name) {
+        assert ParserNames.InstructionTypeArguments.equals(name);
+        int entryCount = stream.readU2();
+        if (entryCount == 0) {
+            return InstructionTypeArgumentsAttribute.EMPTY;
+        }
+        InstructionTypeArgumentsAttribute.Entry[] entries = new InstructionTypeArgumentsAttribute.Entry[entryCount];
+        for (int i = 0; i < entryCount; i++) {
+            int bcOffset = stream.readU2();
+            int typeANum = stream.readU2();
+            TypeHints.TypeA[] typeArguments = new TypeHints.TypeA[typeANum];
+            for (int j = 0; j < typeANum; j++) {
+                byte kind = (byte) stream.readU1();
+                int index = stream.readU2();
+                typeArguments[j] = new TypeHints.TypeA(kind, index);
+            }
+            entries[i] = new InstructionTypeArgumentsAttribute.Entry(bcOffset, typeArguments);
+        }
+        return new InstructionTypeArgumentsAttribute(name, entries);
+    }
+
+    private MethodParameterTypeAttribute parseMethodParameterType(Symbol<Name> name) {
+        assert ParserNames.MethodParameterType.equals(name);
+        int parameterCount = stream.readU2();
+        if (parameterCount == 0) {
+            return MethodParameterTypeAttribute.EMPTY;
+        }
+        TypeHints.TypeB[] typeBs = new TypeHints.TypeB[parameterCount];
+        for (int i = 0; i < parameterCount; i++) {
+            byte kind = (byte) stream.readU1();
+            int index = stream.readU2();
+            typeBs[i] = new TypeHints.TypeB(kind, index);
+        }
+        return new MethodParameterTypeAttribute(name, parameterCount, typeBs);
+    }
+
+    private InvokeReturnTypeAttribute parseInvokeReturnType(Symbol<Name> name) {
+        assert ParserNames.InvokeReturnType.equals(name);
+        int typeHintLength = stream.readU2();
+        if (typeHintLength == 0) {
+            return InvokeReturnTypeAttribute.EMPTY;
+        }
+        InvokeReturnTypeAttribute.Entry[] entries = new InvokeReturnTypeAttribute.Entry[typeHintLength];
+        for (int i = 0; i < typeHintLength; i++) {
+            int bcOffset = stream.readU2();
+            int typeANum = stream.readU2();
+            assert typeANum == 1 : "parseInvokeReturnType: typeANum should be 1, but was " + typeANum;
+            byte kind = (byte) stream.readU1();
+            int index = stream.readU2();
+            entries[i] = new InvokeReturnTypeAttribute.Entry(
+                bcOffset, new TypeHints.TypeA(kind, index));
+        }
+        return new InvokeReturnTypeAttribute(name, entries);
+    }
+
+    private MethodReturnTypeAttribute parseMethodReturnType(Symbol<Name> name) {
+        assert ParserNames.MethodReturnType.equals(name);
+        byte kind = (byte) stream.readU1();
+        int index = stream.readU2();
+        return new MethodReturnTypeAttribute(name, new TypeHints.TypeB(kind, index));
+    }
+
+    private FieldTypeAttribute parseFieldType(Symbol<Name> name) {
+        assert ParserNames.FieldType.equals(name);
+        byte kind = (byte) stream.readU1();
+        int index = stream.readU2();
+        return new FieldTypeAttribute(name, new TypeHints.TypeB(kind, index));
     }
 
     private LineNumberTableAttribute parseLineNumberTable(Symbol<Name> name) {
@@ -1877,6 +2022,8 @@ public final class ClassfileParser {
 
         ConstantValueAttribute constantValue = null;
         CommonAttributeParser commonAttributeParser = new CommonAttributeParser(InfoType.Field);
+        //newly added Field attribute
+        FieldTypeAttribute fieldTypeAttribute = null;
 
         for (int i = 0; i < attributeCount; ++i) {
             final int attributeNameIndex = stream.readU2();
@@ -1906,6 +2053,11 @@ public final class ClassfileParser {
             } else if (attributeName.equals(ParserNames.Synthetic)) {
                 fieldFlags |= ACC_SYNTHETIC;
                 fieldAttributes[i] = Attribute.SYNTHETIC;
+            } else if (attributeName.equals(ParserNames.FieldType)) {
+                if (fieldTypeAttribute != null) {
+                    throw classFormatError("Duplicate FieldType attribute");
+                }
+                fieldAttributes[i] = fieldTypeAttribute = parseFieldType(attributeName);
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (attributeName.equals(ParserNames.RuntimeVisibleAnnotations)) {
                     RuntimeVisibleAnnotationsAttribute annotations = commonAttributeParser.parseRuntimeVisibleAnnotations(attributeSize, AnnotationLocation.Field);

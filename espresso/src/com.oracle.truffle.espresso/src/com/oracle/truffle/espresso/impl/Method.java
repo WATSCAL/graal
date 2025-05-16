@@ -116,6 +116,11 @@ import com.oracle.truffle.espresso.classfile.attributes.LocalVariableTable;
 import com.oracle.truffle.espresso.classfile.attributes.MethodParametersAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InstructionTypeArgumentsAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
 import com.oracle.truffle.espresso.classfile.descriptors.ByteSequence;
@@ -331,6 +336,26 @@ public final class Method extends Member<Signature> implements MethodRef, Truffl
     @Override
     public Attribute[] getAttributes() {
         return getParserMethod().getAttributes();
+    }
+
+    public MethodTypeParameterCountAttribute getMethodTypeParameterCountAttribute() {
+        return (MethodTypeParameterCountAttribute) getAttribute(MethodTypeParameterCountAttribute.NAME);
+    }
+
+    public InstructionTypeArgumentsAttribute getInstructionTypeArgumentsAttribute() {
+        return (InstructionTypeArgumentsAttribute) getAttribute(InstructionTypeArgumentsAttribute.NAME);
+    }
+
+    public MethodParameterTypeAttribute getMethodParameterTypeAttribute() {
+        return (MethodParameterTypeAttribute) getAttribute(MethodParameterTypeAttribute.NAME);
+    }
+
+    public InvokeReturnTypeAttribute getInvokeReturnTypeAttribute() {
+        return (InvokeReturnTypeAttribute) getAttribute(InvokeReturnTypeAttribute.NAME);
+    }
+
+    public MethodReturnTypeAttribute getMethodReturnTypeAttribute() {
+        return (MethodReturnTypeAttribute) getAttribute(MethodReturnTypeAttribute.NAME);
     }
 
     @Override
