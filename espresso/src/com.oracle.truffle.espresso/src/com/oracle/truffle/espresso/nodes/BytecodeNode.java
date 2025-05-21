@@ -74,6 +74,12 @@ import com.oracle.truffle.espresso.classfile.ExceptionHandler;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.BootstrapMethodsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InstructionTypeArgumentsAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodReturnTypeAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeLookupSwitch;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeTableSwitch;
@@ -548,6 +554,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     @CompilationFinal(dimensions = 1) private final int[] branchInfos;
     private final int reifiedTypesCnt;
+    private final TypeHints.TypeA[][] instructionTypeArgHints;
 
     public BytecodeNode(MethodVersion methodVersion) {
         CompilerAsserts.neverPartOfCompilation();
@@ -573,7 +580,13 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         ? TRIVIAL_UNINITIALIZED
                         : TRIVIAL_NO;
         this.branchInfos = initializeBranchInfos(code);
-        this.reifiedTypesCnt = 0; // Placeholder
+        MethodTypeParameterCountAttribute typeParamCntAttr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
+        this.reifiedTypesCnt = typeParamCntAttr != null ? typeParamCntAttr.getCount() : 0;
+        this.instructionTypeArgHints = new TypeHints.TypeA[this.bs.endBCI()][];
+        InstructionTypeArgumentsAttribute instTypeArgAttr = methodVersion.getMethod().getInstructionTypeArgumentsAttribute();
+        for (InstructionTypeArgumentsAttribute.Entry entry : instTypeArgAttr.getEntries()) {
+            this.instructionTypeArgHints[entry.getBytecodeOffset()] = entry.getTypeArguments();
+        }
     }
 
     public Assumption getNoForeignObjectsAssumption() {
@@ -906,6 +919,21 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     setBCI(frame, curBCI);
                 }
 
+                if (instructionTypeArgHints[curBCI] != null) {
+                    CompilerAsserts.partialEvaluationConstant(instructionTypeArgHints[curBCI].length);
+                    for (TypeHints.TypeA typeArg : instructionTypeArgHints[curBCI]) {
+                        byte kind = typeArg.getKind();
+                        CompilerAsserts.partialEvaluationConstant(kind);
+                        if (kind == TypeHints.TypeA.METHOD_TYPE_PARAM) {
+                            putInt(frame, top, getReifiedTypeAt(frame, startingReifiedTypesOffset(methodVersion.getMaxLocals()), typeArg.getIndex()));
+                        } else if (kind == TypeHints.TypeA.CLASS_TYPE_PARAM) {
+                            // TODO
+                        } else {
+                            putInt(frame, top, kind);
+                        }
+                        ++top;
+                    }
+                }
                 // @formatter:off
                 switch (curOpcode) {
                     case NOP: break;
@@ -1426,8 +1454,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     case INVOKESPECIAL: // fall through
                     case INVOKESTATIC:  // fall through
                     case INVOKEINTERFACE:
-                        // TODO: push type arguments into the operand stack
-                        int typeArgsCnt = 0; // Placeholder
                         top += quickenInvoke(frame, top, curBCI, curOpcode, statementIndex); break;
 
                     case NEW         :
