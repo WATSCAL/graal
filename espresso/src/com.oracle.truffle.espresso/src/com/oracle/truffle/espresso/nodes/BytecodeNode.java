@@ -568,7 +568,19 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.code = customCode;
         this.bs = new BytecodeStream(code);
         this.stackOverflowErrorInfo = method.getSOEHandlerInfo();
-        this.frameDescriptor = createFrameDescriptor(methodVersion.getMaxLocals(), methodVersion.getMaxStackSize());
+        MethodTypeParameterCountAttribute typeParamCntAttr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
+        this.reifiedTypesCnt = typeParamCntAttr != null ? typeParamCntAttr.getCount() : 0;
+        int maxExtraStack = 0; // for passing reified types at invoke/new
+        this.instructionTypeArgHints = new TypeHints.TypeA[this.bs.endBCI()][];
+        InstructionTypeArgumentsAttribute instTypeArgAttr = methodVersion.getMethod().getInstructionTypeArgumentsAttribute();
+        if (instTypeArgAttr != null) {
+            for (InstructionTypeArgumentsAttribute.Entry entry : instTypeArgAttr.getEntries()) {
+                this.instructionTypeArgHints[entry.getBytecodeOffset()] = entry.getTypeArguments();
+                maxExtraStack = Math.max(maxExtraStack, entry.getTypeArguments().length);
+            }
+        }
+
+        this.frameDescriptor = createFrameDescriptor(methodVersion.getMaxLocals() + this.reifiedTypesCnt, methodVersion.getMaxStackSize() + maxExtraStack);
         this.noForeignObjects = getLanguage().isImplicitInteropEnabled() ? Truffle.getRuntime().createAssumption("noForeignObjects") : Assumption.ALWAYS_VALID;
         this.implicitExceptionProfile = false;
         this.livenessAnalysis = methodVersion.getLivenessAnalysis();
@@ -580,15 +592,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         ? TRIVIAL_UNINITIALIZED
                         : TRIVIAL_NO;
         this.branchInfos = initializeBranchInfos(code);
-        MethodTypeParameterCountAttribute typeParamCntAttr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
-        this.reifiedTypesCnt = typeParamCntAttr != null ? typeParamCntAttr.getCount() : 0;
-        this.instructionTypeArgHints = new TypeHints.TypeA[this.bs.endBCI()][];
-        InstructionTypeArgumentsAttribute instTypeArgAttr = methodVersion.getMethod().getInstructionTypeArgumentsAttribute();
-        if (instTypeArgAttr != null) {
-            for (InstructionTypeArgumentsAttribute.Entry entry : instTypeArgAttr.getEntries()) {
-                this.instructionTypeArgHints[entry.getBytecodeOffset()] = entry.getTypeArguments();
-            }
-        }
     }
 
     public Assumption getNoForeignObjectsAssumption() {
