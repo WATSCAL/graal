@@ -59,3 +59,5 @@ visualizer/C1Visualizer/*/target/
 *.interp
 *.tokens
 /vm/tests/gh_workflows/CDTInspectorTest/target/
+!classfiles/modified/bcGen/*.class
+!classfiles/scala/bcGen/*.class
