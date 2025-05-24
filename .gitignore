@@ -63,3 +63,5 @@ visualizer/C1Visualizer/*/target/
 !tests/classfiles/plain/bcGen/*.class
 .vscode/
 .metals/
+.scala-build/
+.bsp/
