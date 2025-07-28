@@ -25,6 +25,17 @@
 package com.oracle.truffle.espresso.classfile;
 
 import static com.oracle.truffle.espresso.classfile.ConstantPool.Tag.CLASS;
+import java.io.IOException;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import org.graalvm.collections.EconomicMap;
+
+import com.oracle.truffle.espresso.classfile.ConstantPool.Tag;
 import static com.oracle.truffle.espresso.classfile.ConstantPool.Tag.MODULE;
 import static com.oracle.truffle.espresso.classfile.ConstantPool.Tag.PACKAGE;
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_ABSTRACT;
@@ -56,6 +67,7 @@ import static com.oracle.truffle.espresso.classfile.Constants.ACC_VARARGS;
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_VOLATILE;
 import static com.oracle.truffle.espresso.classfile.Constants.JVM_RECOGNIZED_CLASS_MODIFIERS;
 import static com.oracle.truffle.espresso.classfile.Constants.JVM_RECOGNIZED_METHOD_MODIFIERS;
+<<<<<<< HEAD:espresso-shared/src/com.oracle.truffle.espresso.classfile/src/com/oracle/truffle/espresso/classfile/ClassfileParser.java
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -69,6 +81,8 @@ import java.util.Set;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.espresso.classfile.ConstantPool.Tag;
+=======
+>>>>>>> 9b33d328760 (change NO_HINT to null; refactor array_apply node and array_update node):espresso/src/com.oracle.truffle.espresso.classfile/src/com/oracle/truffle/espresso/classfile/ClassfileParser.java
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.attributes.BootstrapMethodsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.CodeAttribute;
@@ -1444,7 +1458,9 @@ public final class ClassfileParser {
         for (int i = 0; i < parameterCount; i++) {
             byte kind = (byte) stream.readU1();
             int index = stream.readU2();
-            typeBs[i] = new TypeHints.TypeB(kind, index);
+            if (kind != TypeHints.TypeB.EMPTY_KIND) {
+                typeBs[i] = new TypeHints.TypeB(kind, index);
+            } // else remain null
         }
         return new MethodParameterTypeAttribute(name, parameterCount, typeBs);
     }
@@ -1463,7 +1479,7 @@ public final class ClassfileParser {
             byte kind = (byte) stream.readU1();
             int index = stream.readU2();
             entries[i] = new InvokeReturnTypeAttribute.Entry(
-                bcOffset, new TypeHints.TypeB(kind, index));
+                bcOffset, kind != TypeHints.TypeB.EMPTY_KIND ? (new TypeHints.TypeB(kind, index)) : null);
         }
         return new InvokeReturnTypeAttribute(name, entries);
     }
@@ -1472,14 +1488,14 @@ public final class ClassfileParser {
         assert ParserNames.MethodReturnType.equals(name);
         byte kind = (byte) stream.readU1();
         int index = stream.readU2();
-        return new MethodReturnTypeAttribute(name, new TypeHints.TypeB(kind, index));
+        return new MethodReturnTypeAttribute(name, kind != TypeHints.TypeB.EMPTY_KIND ? (new TypeHints.TypeB(kind, index)) : null);
     }
 
     private FieldTypeAttribute parseFieldType(Symbol<Name> name) {
         assert ParserNames.FieldType.equals(name);
         byte kind = (byte) stream.readU1();
         int index = stream.readU2();
-        return new FieldTypeAttribute(name, new TypeHints.TypeB(kind, index));
+        return new FieldTypeAttribute(name, kind != TypeHints.TypeB.EMPTY_KIND ? (new TypeHints.TypeB(kind, index)) : null);
     }
 
     private LineNumberTableAttribute parseLineNumberTable(Symbol<Name> name) {
