@@ -60,7 +60,9 @@ visualizer/C1Visualizer/*/target/
 *.tokens
 /vm/tests/gh_workflows/CDTInspectorTest/target/
 !tests/classfiles/hint/bcGen/*.class
+!tests/classfiles/hint/bcGen/Classes/*.class
 !tests/classfiles/plain/bcGen/*.class
+!tests/classfiles/plain/bcGen/Classes/*.class
 .vscode/
 .metals/
 .scala-build/
