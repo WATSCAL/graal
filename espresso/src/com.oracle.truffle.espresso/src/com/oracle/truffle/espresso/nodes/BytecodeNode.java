@@ -632,8 +632,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.instOperandTypes = new byte[this.bs.endBCI()][];
         this.instOperandArrayElementTypes = new byte[this.bs.endBCI()][];
         if (instOperandTypeHints != null) {
-            // this.instOperandTypes = new byte[instOperandTypeHints.length][];
-            // this.instOperandArrayElementTypes = new byte[instOperandTypeHints.length][];
             this.isInvoke = new boolean[instOperandTypeHints.length];
             for (int i = 0; i < instOperandTypeHints.length; ++i) {
                 if (instOperandTypeHints[i] != null) {
@@ -659,8 +657,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 }
             }
         } else {
-            // this.instOperandTypes = new byte[this.bs.endBCI()][];
-            // this.instOperandArrayElementTypes = new byte[this.bs.endBCI()][];
             this.isInvoke = null;
         }
 
@@ -962,6 +958,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (isInvoke != null && instOperandTypes[curBCI] != null) {
             CompilerAsserts.partialEvaluationConstant(isInvoke[curBCI]);
             if (isInvoke[curBCI]) {
+                // System.out.println("PrepareArgsForInvoke  bci: " + curBCI);
                 for (int i = 0; i < instOperandTypes[curBCI].length; ++i) {
                     int position = top - (instOperandTypes[curBCI].length - i);
                     CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][i]);
@@ -1015,6 +1012,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (isInvoke != null && 
             isInvoke[curBCI] && invokeReturnTypes[curBCI] != 0){
             assert top >= 1;
+            // System.out.println("postInvokeUnboxing bci: " + curBCI + " opcode: " + Bytecodes.nameOf(curOpcode) + " returnType: " + invokeReturnTypes[curBCI]);
             // need to add the stack effect of the opcode, then get the top object
             int returnPosition = top + Bytecodes.stackEffectOf(curOpcode) - 1;
             StaticObject returnObject = peekObject(frame, returnPosition);
