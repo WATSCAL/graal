@@ -82,6 +82,8 @@ import com.oracle.truffle.espresso.shared.meta.KnownTypes;
 import com.oracle.truffle.espresso.substitutions.JImageExtensions;
 import com.oracle.truffle.espresso.substitutions.JavaType;
 import com.oracle.truffle.espresso.vm.InterpreterToVM;
+import com.oracle.truffle.api.nodes.GuestBoxing;
+import com.oracle.truffle.api.nodes.GuestUnboxing;
 
 /**
  * Introspection API to access the guest world from the host. Provides seamless conversions from
@@ -3206,6 +3208,7 @@ public final class Meta extends ContextAccessImpl
         }
     }
 
+    @GuestUnboxing
     public boolean unboxBoolean(@JavaType(Boolean.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Boolean) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3213,6 +3216,7 @@ public final class Meta extends ContextAccessImpl
         return (boolean) java_lang_Boolean_value.get(boxed);
     }
 
+    @GuestUnboxing
     public byte unboxByte(@JavaType(Byte.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Byte) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3220,6 +3224,7 @@ public final class Meta extends ContextAccessImpl
         return (byte) java_lang_Byte_value.get(boxed);
     }
 
+    @GuestUnboxing
     public char unboxCharacter(@JavaType(Character.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Character) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3227,6 +3232,7 @@ public final class Meta extends ContextAccessImpl
         return (char) java_lang_Character_value.get(boxed);
     }
 
+    @GuestUnboxing
     public short unboxShort(@JavaType(Short.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Short) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3234,6 +3240,7 @@ public final class Meta extends ContextAccessImpl
         return (short) java_lang_Short_value.get(boxed);
     }
 
+    @GuestUnboxing
     public float unboxFloat(@JavaType(Float.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Float) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3241,6 +3248,7 @@ public final class Meta extends ContextAccessImpl
         return (float) java_lang_Float_value.get(boxed);
     }
 
+    @GuestUnboxing
     public int unboxInteger(@JavaType(Integer.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Integer) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3248,6 +3256,7 @@ public final class Meta extends ContextAccessImpl
         return (int) java_lang_Integer_value.get(boxed);
     }
 
+    @GuestUnboxing
     public double unboxDouble(@JavaType(Double.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Double) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3255,6 +3264,7 @@ public final class Meta extends ContextAccessImpl
         return (double) java_lang_Double_value.get(boxed);
     }
 
+    @GuestUnboxing
     public long unboxLong(@JavaType(Long.class) StaticObject boxed) {
         if (StaticObject.isNull(boxed) || boxed.getKlass() != java_lang_Long) {
             throw throwException(java_lang_IllegalArgumentException);
@@ -3266,34 +3276,42 @@ public final class Meta extends ContextAccessImpl
 
     // region Guest boxing
 
+    @GuestBoxing
     public @JavaType(Boolean.class) StaticObject boxBoolean(boolean value) {
         return (StaticObject) java_lang_Boolean_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Byte.class) StaticObject boxByte(byte value) {
         return (StaticObject) java_lang_Byte_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Character.class) StaticObject boxCharacter(char value) {
         return (StaticObject) java_lang_Character_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Short.class) StaticObject boxShort(short value) {
         return (StaticObject) java_lang_Short_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Float.class) StaticObject boxFloat(float value) {
         return (StaticObject) java_lang_Float_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Integer.class) StaticObject boxInteger(int value) {
         return (StaticObject) java_lang_Integer_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Double.class) StaticObject boxDouble(double value) {
         return (StaticObject) java_lang_Double_valueOf.invokeDirectStatic(value);
     }
 
+    @GuestBoxing
     public @JavaType(Long.class) StaticObject boxLong(long value) {
         return (StaticObject) java_lang_Long_valueOf.invokeDirectStatic(value);
     }
