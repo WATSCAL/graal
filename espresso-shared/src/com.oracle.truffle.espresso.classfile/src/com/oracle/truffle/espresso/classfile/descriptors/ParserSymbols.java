@@ -143,6 +143,7 @@ public final class ParserSymbols {
         public static final Symbol<Name> MethodParameterType = SYMBOLS.putName("MethodParameterType");
         public static final Symbol<Name> InvokeReturnType = SYMBOLS.putName("InvokeReturnType");
         public static final Symbol<Name> ExtraBoxUnbox = SYMBOLS.putName("ExtraBoxUnbox");
+        public static final Symbol<Name> FieldType = SYMBOLS.putName("FieldType");
 
 
         // Polymorphic signature methods
