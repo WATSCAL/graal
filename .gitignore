@@ -65,6 +65,8 @@ visualizer/C1Visualizer/*/target/
 !tests/classfiles/plain/bcGen/Classes/*.class
 !tests/classfiles/hint/bcGen/Methods/*.class
 !tests/classfiles/plain/bcGen/Methods/*.class
+!tests/classfiles/hint/bcGen/Arrays/*.class
+!tests/classfiles/plain/bcGen/Arrays/*.class
 .vscode/
 .metals/
 .scala-build/
