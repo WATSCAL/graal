@@ -11,7 +11,7 @@ public class ClassTypeParamListAttribute extends Attribute {
 
     private final FieldRefConstant.Indexes[] typeParams;
 
-    public FieldRefConstant.Indexes[] gettypeParams() {
+    public FieldRefConstant.Indexes[] getTypeParams() {
         return typeParams;
     }
 

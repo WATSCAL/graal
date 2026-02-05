@@ -63,9 +63,9 @@ final class LinkedKlassFieldLayout {
 
     final int fieldTableLength;
 
-    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) {
-        StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
-        StaticShape.Builder staticBuilder = StaticShape.newBuilder(language);
+    public final class SpecializedLayout {
+        @CompilationFinal(dimensions = 1)
+        final LinkedField[] instanceFields;
 
         FieldsInfo fieldsInfo = FieldsInfo.create(parserKlass, language);
         int nextInstanceFieldIndex = 0;
@@ -84,6 +84,8 @@ final class LinkedKlassFieldLayout {
             } else {
                 createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
             }
+            builder.property(field, fieldType, storeAsFinal(parserKlass, parserField));
+            linkedFields[index] = field;
         }
 
         for (HiddenField hiddenField : fieldsInfo.hiddenFields) {
@@ -93,16 +95,43 @@ final class LinkedKlassFieldLayout {
             }
         }
 
-        if (superKlass == null) {
-            instanceShape = instanceBuilder.build(StaticObject.class, StaticObjectFactory.class);
-        } else {
-            instanceShape = instanceBuilder.build(superKlass.getShape(false));
+
+            FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
+            int nextInstanceFieldIndex = 0;
+            int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
+            instanceFields = new LinkedField[fieldCounter.instanceFields];
+
+            LinkedField.IdMode idMode = LinkedKlassFieldLayout.getIdMode(parserKlass);
+
+            for (ParserField parserField : parserKlass.getFields()) {
+                if (parserField.getFieldTypeAttribute() != null) {
+                    int index = parserField.getFieldTypeAttribute().getFieldType().getIndex();
+                    byte alteredType = classTypeArgs[index];
+                    if (!parserField.isStatic()) {
+                        createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
+                    }
+                }
+                if (!parserField.isStatic()) {
+                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
+                }
+            }
+
+            for (HiddenField hiddenField : fieldCounter.hiddenFieldNames) {
+                if (hiddenField.predicate.test(language)) {
+                    ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, null);
+                    createAndRegisterLinkedField(parserKlass, hiddenParserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
+                }
+            }
+
+            if (superKlass == null) {
+                instanceShape = instanceBuilder.build(StaticObject.class, StaticObjectFactory.class);
+            } else {
+                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(classTypeArgs));
+            }
         }
-        staticShape = staticBuilder.build(StaticObject.class, StaticObjectFactory.class);
-        fieldTableLength = nextInstanceFieldSlot;
     }
 
-    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, byte[] reifiedFieldTypes){
+    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) { // all generic fields are created as reference slots
         StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
         StaticShape.Builder staticBuilder = StaticShape.newBuilder(language);
 
@@ -118,15 +147,6 @@ final class LinkedKlassFieldLayout {
         LinkedField.IdMode idMode = getIdMode(parserKlass);
 
         for (ParserField parserField : parserKlass.getFields()) {
-            if (parserField.getFieldTypeAttribute() != null) {
-                int index = parserField.getFieldTypeAttribute().getFieldType().getIndex(); // considering only K0,n for now
-                byte reifiedType = reifiedFieldTypes[index];
-                if (parserField.isStatic()) {
-                    createAndRegisterLinkedField(parserKlass, parserField, nextStaticFieldSlot++, nextStaticFieldIndex++, idMode, staticBuilder, staticFields, reifiedType);
-                } else {
-                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
-                }
-            }
             if (parserField.isStatic()) {
                 createAndRegisterLinkedField(parserKlass, parserField, nextStaticFieldSlot++, nextStaticFieldIndex++, idMode, staticBuilder, staticFields);
             } else {
@@ -184,25 +204,6 @@ final class LinkedKlassFieldLayout {
     private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields) {
         LinkedField field = new LinkedField(parserField, slot, idMode);
         builder.property(field, LinkedField.getPropertyType(parserField), storeAsFinal(parserKlass, parserField));
-        linkedFields[index] = field;
-    }
-
-    private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields,
-                                                     byte reifiedType) {
-        LinkedField field = new LinkedField(parserField, slot, idMode);
-        Class<?> fieldType;
-        switch (reifiedType) {
-            case TypeHints.BYTE: fieldType = byte.class; break;
-            case TypeHints.CHAR: fieldType = char.class; break;
-            case TypeHints.DOUBLE: fieldType = double.class; break;
-            case TypeHints.FLOAT: fieldType = float.class; break;
-            case TypeHints.INT: fieldType = int.class; break;
-            case TypeHints.LONG: fieldType = long.class; break;
-            case TypeHints.SHORT: fieldType = short.class; break;
-            case TypeHints.BOOLEAN: fieldType = boolean.class; break;
-            default: fieldType = StaticObject.class; break; //can never be hidden fields
-        }
-        builder.property(field, fieldType, storeAsFinal(parserKlass, parserField));
         linkedFields[index] = field;
     }
 
