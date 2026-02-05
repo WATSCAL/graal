@@ -1935,11 +1935,13 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         return getAllocator().createNew((ObjectKlass) klass);
     }
 
+    /*
     private StaticObject newReifiedObject(Klass klass, byte[] reifiedTypeValues){
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
         return getAllocator().createNewReified((ObjectKlass) klass, reifiedTypeValues);
     }
+    */
 
     private StaticObject newPrimitiveArray(byte jvmPrimitiveType, int length) {
         Meta meta = getMethod().getMeta();

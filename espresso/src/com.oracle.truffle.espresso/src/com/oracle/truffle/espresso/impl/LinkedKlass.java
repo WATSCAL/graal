@@ -36,6 +36,7 @@ import com.oracle.truffle.espresso.classfile.ImmutableConstantPool;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
 import com.oracle.truffle.espresso.classfile.ParserMethod;
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -48,11 +49,13 @@ import com.oracle.truffle.espresso.runtime.staticobject.StaticObject.StaticObjec
 public final class LinkedKlass {
 
     public static final LinkedKlass[] EMPTY_ARRAY = new LinkedKlass[0];
-    private final EspressoLanguage language;
     private final ParserKlass parserKlass;
 
     // Linked structural references.
     private final LinkedKlass superKlass;
+
+    private final int curLevelTypeParamNum;
+    private final int allTypeParamNum;
 
     @CompilationFinal(dimensions = 1) //
     private final LinkedKlass[] interfaces;
@@ -65,8 +68,6 @@ public final class LinkedKlass {
     private final StaticShape<StaticObjectFactory> instanceShape;
     private final StaticShape<StaticObjectFactory> staticShape;
 
-    private Map<ByteArrayKey, LinkedKlassFieldLayout> reifiedShapes = new HashMap<>(); // ????
-
     // instance fields declared in the corresponding LinkedKlass (includes hidden fields)
     @CompilationFinal(dimensions = 1) //
     final LinkedField[] instanceFields;
@@ -74,11 +75,17 @@ public final class LinkedKlass {
     @CompilationFinal(dimensions = 1) //
     final LinkedField[] staticFields;
 
+    @CompilationFinal(dimensions = 2)
+    private final byte[][] specializedKeys;
+    @CompilationFinal(dimensions = 1)
+    private final StaticShape<StaticObjectFactory>[] specializedShapes;
+    @CompilationFinal(dimensions = 2)
+    final LinkedField[][] specializedInstanceFields;
+
     final int fieldTableLength;
 
     private LinkedKlass(ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces, StaticShape<StaticObjectFactory> instanceShape,
                     StaticShape<StaticObjectFactory> staticShape, LinkedField[] instanceFields, LinkedField[] staticFields, int fieldTableLength) {
-        this.language = null;
         this.parserKlass = parserKlass;
         this.superKlass = superKlass;
         this.interfaces = interfaces;
@@ -107,46 +114,19 @@ public final class LinkedKlass {
             linkedMethods[i] = new LinkedMethod(parserMethod);
         }
         this.methods = linkedMethods;
-    }
 
-    private LinkedKlass(EspressoLanguage language,
-                    ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces, StaticShape<StaticObjectFactory> instanceShape,
-                    StaticShape<StaticObjectFactory> staticShape, LinkedField[] instanceFields, LinkedField[] staticFields, int fieldTableLength){
-        this.language = language;
-        this.parserKlass = parserKlass;
-        this.superKlass = superKlass;
-        this.interfaces = interfaces;
-        this.instanceShape = instanceShape;
-        this.staticShape = staticShape;
-        this.instanceFields = instanceFields;
-        this.staticFields = staticFields;
-        this.fieldTableLength = fieldTableLength;
+        ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
+        this.curLevelTypeParamNum = typeParamList != null ? typeParamList.getTypeParams().length : 0;
+        this.allTypeParamNum = superKlass != null ? superKlass.getAllTypeParamNum() + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
 
-        // Streams are forbidden in Espresso.
-        // assert Arrays.stream(interfaces).allMatch(i -> Modifier.isInterface(i.getFlags()));
-        assert superKlass == null || !Modifier.isInterface(superKlass.getFlags());
-
-        // Super interfaces are not checked for finalizers; a default .finalize method will be
-        // resolved to Object.finalize, making the finalizer not observable.
-        this.hasFinalizer = ((parserKlass.getFlags() & ACC_FINALIZER) != 0) || (superKlass != null && (superKlass.getFlags() & ACC_FINALIZER) != 0);
-        assert !this.hasFinalizer || !Types.java_lang_Object.equals(parserKlass.getType()) : "java.lang.Object cannot be marked as finalizable";
-
-        final int methodCount = parserKlass.getMethods().length;
-        LinkedMethod[] linkedMethods = new LinkedMethod[methodCount];
-
-        for (int i = 0; i < methodCount; ++i) {
-            ParserMethod parserMethod = parserKlass.getMethods()[i];
-            // TODO(peterssen): Methods with custom constant pool should spawned here, but not
-            // supported.
-            linkedMethods[i] = new LinkedMethod(parserMethod);
-        }
-        this.methods = linkedMethods;
+        this.specializedKeys = new byte[0][];
+        this.specializedShapes = new StaticShape<StaticObjectFactory>[0];
+        this.specializedInstanceFields = new LinkedField[0][];
     }
 
     public static LinkedKlass create(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces) {
         LinkedKlassFieldLayout fieldLayout = new LinkedKlassFieldLayout(language, parserKlass, superKlass);
         return new LinkedKlass(
-                        language,
                         parserKlass,
                         superKlass,
                         interfaces,
@@ -190,6 +170,15 @@ public final class LinkedKlass {
     Attribute getAttribute(Symbol<Name> name) {
         return parserKlass.getAttribute(name);
     }
+
+    public int getCurrentLevelTypeParamNum() {
+        return this.curLevelTypeParamNum;
+    }
+
+    public int getAllTypeParamNum() {
+        return this.allTypeParamNum;
+    }
+
 
     Symbol<Type> getType() {
         return parserKlass.getType();
@@ -239,6 +228,13 @@ public final class LinkedKlass {
         return isStatic ? staticShape : instanceShape;
     }
 
+    public StaticShape<StaticObjectFactory> getSpecializedShape(byte[] classTypeArgs) {
+        // TODO
+        // only use the first allTypeParamNum bytes as key!
+        // similar to create, but use SpecializedLayout
+    }
+
+    /*
     public StaticShape<StaticObjectFactory> getReifiedShape(boolean isStatic, byte[] reifiedTypeValues) {
         assert reifiedTypeValues != null : "reifiedTypeValues must not be null";
         ByteArrayKey key = new ByteArrayKey(reifiedTypeValues);
@@ -248,35 +244,10 @@ public final class LinkedKlass {
         reifiedShapes.put(key, fieldLayout);
         return isStatic ? fieldLayout.staticShape : fieldLayout.instanceShape;
     }
+    */
 
     @Override
     public String toString() {
         return "LinkedKlass<" + getType() + ">";
-    }
-
-    private final class ByteArrayKey {
-        private final byte[] data;
-        private final int hash;
-
-        ByteArrayKey(byte[] data) {
-            this.data = data;
-            this.hash = Arrays.hashCode(data);
-        }
-
-        @Override
-        public boolean equals(Object obj){
-            if (this == obj) return true;
-            if (obj instanceof ByteArrayKey other){
-                return Arrays.equals(this.data, other.data);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-
     }
 }

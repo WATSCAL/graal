@@ -119,7 +119,7 @@ public final class GuestAllocator implements LanguageAccess {
         return trackAllocation(klass, newObj);
     }
 
-    public StaticObject createNewReified(ObjectKlass klass, byte[] reifiedTypeValues) {
+    public StaticObject createNewSpecialized(ObjectKlass klass, byte[] classTypeArgs) {
         assert AllocationChecks.canAllocateNewReference(klass);
         assert klass != klass.getMeta().java_lang_Class;
         klass.safeInitialize();

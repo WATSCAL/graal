@@ -73,6 +73,7 @@ import com.oracle.truffle.espresso.classfile.attributes.RecordAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceDebugExtensionAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
@@ -179,6 +180,10 @@ public final class ObjectKlass extends Klass {
 
     public Attribute getAttribute(Symbol<Name> attrName) {
         return getLinkedKlass().getAttribute(attrName);
+    }
+
+    public ClassTypeParamListAttribute getClassTypeParamListAttribute() {
+        return (ClassTypeParamListAttribute) getAttribute(ClassTypeParamListAttribute.NAME);
     }
 
     @SuppressWarnings("this-escape")
