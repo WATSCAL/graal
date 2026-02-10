@@ -54,8 +54,8 @@ public final class LinkedKlass {
     // Linked structural references.
     private final LinkedKlass superKlass;
 
-    private final int curLevelTypeParamNum;
-    private final int allTypeParamNum;
+    final int curLevelTypeParamNum;
+    final int allTypeParamNum;
 
     @CompilationFinal(dimensions = 1) //
     private final LinkedKlass[] interfaces;
@@ -174,15 +174,6 @@ public final class LinkedKlass {
     Attribute getAttribute(Symbol<Name> name) {
         return parserKlass.getAttribute(name);
     }
-
-    public int getCurrentLevelTypeParamNum() {
-        return this.curLevelTypeParamNum;
-    }
-
-    public int getAllTypeParamNum() {
-        return this.allTypeParamNum;
-    }
-
 
     Symbol<Type> getType() {
         return parserKlass.getType();
