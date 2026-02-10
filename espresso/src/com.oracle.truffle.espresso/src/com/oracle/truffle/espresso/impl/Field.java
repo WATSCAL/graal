@@ -52,6 +52,7 @@ import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.attributes.AttributedElement;
 import com.oracle.truffle.espresso.classfile.attributes.ConstantValueAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 import com.oracle.truffle.espresso.classfile.descriptors.ModifiedUTF8;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
@@ -114,10 +115,21 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
 
     private boolean removedByRedefinition;
 
-    public Field(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool) {
+    private final int linkedFieldIdx;
+    private final boolean inSpecializedShape;
+
+    private final int genericTypeParamIdx; // valid if it has generic type, otherwise -1
+
+    public Field(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isStatic, int linkedFieldIdx) {
         this.linkedField = linkedField;
         this.holder = holder;
         this.pool = pool;
+
+        this.linkedFieldIdx = linkedFieldIdx;
+        this.inSpecializedShape = holder.linkedKlass.allTypeParamNum > 0 && !isStatic;
+        
+        FieldTypeAttribute fieldTypeAttr = linkedField.getParserField().getFieldTypeAttribute();
+        this.genericTypeParamIdx = fieldTypeAttr != null ? fieldTypeAttr.getFieldType().getIndex() : -1;
     }
 
     @Override

@@ -209,7 +209,7 @@ public final class ObjectKlass extends Klass implements AttributedElement {
         System.arraycopy(skFieldTable, 0, fieldTable, 0, skFieldTable.length);
         this.localFieldTableIndex = skFieldTable.length;
         for (int i = 0; i < lkInstanceFields.length; i++) {
-            Field instanceField = new Field(klassVersion, lkInstanceFields[i], pool);
+            Field instanceField = new Field(klassVersion, lkInstanceFields[i], pool, false, i);
             fieldTable[localFieldTableIndex + i] = instanceField;
         }
         for (int i = 0; i < lkStaticFields.length; i++) {
@@ -220,7 +220,7 @@ public final class ObjectKlass extends Klass implements AttributedElement {
                             && TypeSymbols.isReference(lkField.getType()) && Modifier.isFinal(lkField.getFlags())) {
                 staticField = new EnumConstantField(klassVersion, lkField, pool);
             } else {
-                staticField = new Field(klassVersion, lkField, pool);
+                staticField = new Field(klassVersion, lkField, pool, true, i);
             }
             staticFieldTable[i] = staticField;
         }
