@@ -107,9 +107,8 @@ final class LinkedKlassFieldLayout {
                 if (parserField.getFieldTypeAttribute() != null) {
                     int index = parserField.getFieldTypeAttribute().getFieldType().getIndex();
                     byte alteredType = classTypeArgs[index];
-                    if (!parserField.isStatic()) {
-                        createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
-                    }
+                    assert !parserField.isStatic();
+                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
                 }
                 if (!parserField.isStatic()) {
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
@@ -126,7 +125,7 @@ final class LinkedKlassFieldLayout {
             if (superKlass == null) {
                 instanceShape = instanceBuilder.build(StaticObject.class, StaticObjectFactory.class);
             } else {
-                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(classTypeArgs));
+                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(language classTypeArgs));
             }
         }
     }
