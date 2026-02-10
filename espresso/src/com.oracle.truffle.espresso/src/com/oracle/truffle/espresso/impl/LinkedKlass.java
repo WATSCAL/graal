@@ -228,10 +228,42 @@ public final class LinkedKlass {
         return isStatic ? staticShape : instanceShape;
     }
 
-    public StaticShape<StaticObjectFactory> getSpecializedShape(byte[] classTypeArgs) {
-        // TODO
-        // only use the first allTypeParamNum bytes as key!
-        // similar to create, but use SpecializedLayout
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
+    private boolean matchSpecializationKey(int specializationIndex, byte[] classTypeArgs) {
+        for (int i = 0; i < this.allTypeParamNum; ++i) {
+            if (this.specializedKeys[specializationIndex][i] != classTypeArgs[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
+    public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
+        if (this.allTypeParamNum == 0) {
+            return this.instanceShape;
+        }
+
+        for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
+            if (matchSpecializationKey(idx, classTypeArgs)) {
+                return this.specializedShapes[idx];
+            }
+        }
+
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+
+        LinkedKlassFieldLayout.SpecializedLayout newLayout = new LinkedKlassFieldLayout.SpecializedLayout(language, this.parserKlass, this.superKlass, classTypeArgs);
+
+        int curLen = this.specializedKeys.length;
+
+        this.specializedKeys = Arrays.copyOf(this.specializedKeys, curLen + 1);
+        this.specializedKeys[curLen] = Arrays.copyOf(classTypeArgs, this.allTypeParamNum);
+        this.specializedShapes = Arrays.copyOf(this.specializedShapes, curLen + 1);
+        this.specializedShapes[curLen] = newLayout.instanceShape;
+        this.specializedInstanceFields = Arrays.copyOf(this.specializedInstanceFields, curLen + 1);
+        this.specializedInstanceFields[curLen] = newLayout.instanceFields;
+
+        return newLayout.instanceShape;
     }
 
     /*
