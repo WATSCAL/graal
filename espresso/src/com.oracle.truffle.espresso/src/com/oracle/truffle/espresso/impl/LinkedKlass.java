@@ -80,7 +80,11 @@ public final class LinkedKlass {
     @CompilationFinal(dimensions = 1)
     private final StaticShape<StaticObjectFactory>[] specializedShapes;
     @CompilationFinal(dimensions = 2)
-    final LinkedField[][] specializedInstanceFields;
+    private final LinkedField[][] specializedInstanceFields;
+
+    private static final byte[][] EMPTY_BYTE_KEY = new byte[0][];
+    private static final StaticShape<StaticObjectFactory>[] EMPTY_SHAPE_ARRAY = new StaticShape<StaticObjectFactory>[0];
+    private static final LinkedField[][] EMPTY_LINKED_FIELD_ARRAY = new LinkedField[0][];
 
     final int fieldTableLength;
 
@@ -119,9 +123,9 @@ public final class LinkedKlass {
         this.curLevelTypeParamNum = typeParamList != null ? typeParamList.getTypeParams().length : 0;
         this.allTypeParamNum = superKlass != null ? superKlass.getAllTypeParamNum() + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
 
-        this.specializedKeys = new byte[0][];
-        this.specializedShapes = new StaticShape<StaticObjectFactory>[0];
-        this.specializedInstanceFields = new LinkedField[0][];
+        this.specializedKeys = EMPTY_BYTE_KEY;
+        this.specializedShapes = EMPTY_SHAPE_ARRAY;
+        this.specializedInstanceFields = EMPTY_LINKED_FIELD_ARRAY;
     }
 
     public static LinkedKlass create(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces) {
