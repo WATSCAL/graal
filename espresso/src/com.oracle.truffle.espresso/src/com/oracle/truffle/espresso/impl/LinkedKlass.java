@@ -76,11 +76,11 @@ public final class LinkedKlass {
     final LinkedField[] staticFields;
 
     @CompilationFinal(dimensions = 2)
-    private final byte[][] specializedKeys;
+    private byte[][] specializedKeys;
     @CompilationFinal(dimensions = 1)
-    private final StaticShape<StaticObjectFactory>[] specializedShapes;
+    private StaticShape<StaticObjectFactory>[] specializedShapes;
     @CompilationFinal(dimensions = 2)
-    private final LinkedField[][] specializedInstanceFields;
+    private LinkedField[][] specializedInstanceFields;
 
     private static final byte[][] EMPTY_BYTE_KEY = new byte[0][];
     private static final StaticShape<StaticObjectFactory>[] EMPTY_SHAPE_ARRAY = new StaticShape<StaticObjectFactory>[0];
@@ -234,14 +234,10 @@ public final class LinkedKlass {
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
-    public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
-        if (this.allTypeParamNum == 0) {
-            return this.instanceShape;
-        }
-
+    public int getSpecializationIndex(EspressoLanguage language, byte[] classTypeArgs) {
         for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
             if (matchSpecializationKey(idx, classTypeArgs)) {
-                return this.specializedShapes[idx];
+                return idx;
             }
         }
 
@@ -258,8 +254,26 @@ public final class LinkedKlass {
         this.specializedInstanceFields = Arrays.copyOf(this.specializedInstanceFields, curLen + 1);
         this.specializedInstanceFields[curLen] = newLayout.instanceFields;
 
-        return newLayout.instanceShape;
+        return curLen;
     }
+
+    public getSpecializedShapeAt(int idx) {
+        return this.specializedShapes[idx];
+    }
+
+    public getSpecializedKeyAt(int idx) {
+        return this.specializedKeys[idx];
+    }
+
+    public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
+        if (this.allTypeParamNum == 0) {
+            return this.instanceShape;
+        }
+
+        return this.specializedShapes[this.getSpecializationIndex(language, classTypeArgs)];
+    }
+
+
 
     /*
     public StaticShape<StaticObjectFactory> getReifiedShape(boolean isStatic, byte[] reifiedTypeValues) {

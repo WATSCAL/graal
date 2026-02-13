@@ -67,20 +67,27 @@ public class StaticObject implements TruffleObject, Cloneable {
 
     private final Klass klass; // != PrimitiveKlass
 
+    public final int specializationIndex;
+
     private EspressoLock lockOrForeignMarker;
 
     // region Constructors
     protected StaticObject(Klass klass) {
-        this(klass, false);
+        this(klass, false, -1);
     }
 
     protected StaticObject(Klass klass, boolean isForeign) {
+        this(klass, isForeign, -1);
+    }
+
+    protected StaticObject(Klass klass, boolean isForeign, int specializationIndex) {
         if (isForeign) {
             // This assignment is visible by all threads as a side-effect of the setting of the
             // final `klass` field in the constructor.
             lockOrForeignMarker = FOREIGN_MARKER;
         }
         this.klass = klass;
+        this.specializationIndex = specializationIndex;
     }
 
     @Override
@@ -455,6 +462,8 @@ public class StaticObject implements TruffleObject, Cloneable {
         StaticObject create(Klass klass);
 
         StaticObject create(Klass klass, boolean isForeign);
+
+        StaticObject create(Klass klass, boolean isForeign, int specializationIndex);
     }
     // endregion Factory interface.
 }

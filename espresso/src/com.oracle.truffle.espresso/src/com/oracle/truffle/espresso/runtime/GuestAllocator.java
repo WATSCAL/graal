@@ -50,6 +50,7 @@ import com.oracle.truffle.espresso.impl.ContextAccessImpl;
 import com.oracle.truffle.espresso.impl.Field;
 import com.oracle.truffle.espresso.impl.Klass;
 import com.oracle.truffle.espresso.impl.LanguageAccess;
+import com.oracle.truffle.espresso.impl.LinkedKlass;
 import com.oracle.truffle.espresso.impl.ObjectKlass;
 import com.oracle.truffle.espresso.impl.PackageTable;
 import com.oracle.truffle.espresso.meta.EspressoError;
@@ -123,10 +124,12 @@ public final class GuestAllocator implements LanguageAccess {
         assert AllocationChecks.canAllocateNewReference(klass);
         assert klass != klass.getMeta().java_lang_Class;
         klass.safeInitialize();
-        StaticShape<StaticObject.StaticObjectFactory> reifiedShape = klass.getLinkedKlass().getReifiedShape(false, reifiedTypeValues);
-        StaticObject newReifiedObj = reifiedShape.getFactory().create(klass);
-        initInstanceFields(newReifiedObj, klass);
-        return trackAllocation(klass, newReifiedObj);
+        LinkedKlass lkKlass = klass.getLinkedKlass();
+        int specializationIdx = lkKlass.getSpecializationIndex(this.language, classTypeArgs);
+        StaticShape<StaticObject.StaticObjectFactory> reifiedShape = lkKlass.getSpecializedShapeAt(specializationIdx);
+        StaticObject newSpecializedObj = reifiedShape.getFactory().create(klass, false, specializationIdx);
+        initInstanceFields(newSpecializedObj, klass);
+        return trackAllocation(klass, newSpecializedObj);
     }
 
     /**
