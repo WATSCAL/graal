@@ -115,10 +115,10 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
 
     private boolean removedByRedefinition;
 
-    private final int linkedFieldIdx;
-    private final boolean inSpecializedShape;
+    public final int linkedFieldIdx;
+    public final boolean inSpecializedShape;
 
-    private final int genericTypeParamIdx; // valid if it has generic type, otherwise -1
+    public final int genericTypeParamIdx; // valid if it has generic type, otherwise -1
 
     public Field(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isStatic, int linkedFieldIdx) {
         this.linkedField = linkedField;
@@ -127,9 +127,17 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
 
         this.linkedFieldIdx = linkedFieldIdx;
         this.inSpecializedShape = holder.linkedKlass.allTypeParamNum > 0 && !isStatic;
-        
+
         FieldTypeAttribute fieldTypeAttr = linkedField.getParserField().getFieldTypeAttribute();
         this.genericTypeParamIdx = fieldTypeAttr != null ? fieldTypeAttr.getFieldType().getIndex() : -1;
+    }
+
+    public final LinkedField getSpecializedLinkedField(byte[] classTypeParams) {
+        int specializationIdx = holder.linkedKlass.getSpecializationIndexReadOnly(classTypeParams);
+        CompilerAsserts.partialEvaluationConstant(specializationIdx);
+        LinkedField ret = holder.linkedKlass.getSpecializedInstanceFieldsAt(specializationIdx)[linkedFieldIdx];
+        CompilerAsserts.partialEvaluationConstant(ret);
+        return ret;
     }
 
     @Override
