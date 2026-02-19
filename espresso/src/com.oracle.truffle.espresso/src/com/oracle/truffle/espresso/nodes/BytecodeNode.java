@@ -71,6 +71,8 @@ import com.oracle.truffle.espresso.classfile.bytecode.BytecodeLookupSwitch;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeTableSwitch;
 import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
+
+import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.*;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.AALOAD;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.AASTORE;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ACONST_NULL;
@@ -130,154 +132,7 @@ import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.DUP_X2;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.F2D;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.F2I;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.F2L;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FADD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FALOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FASTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FCMPG;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FCMPL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FCONST_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FCONST_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FCONST_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FDIV;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FLOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FLOAD_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FLOAD_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FLOAD_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FLOAD_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FMUL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FNEG;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FREM;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FRETURN;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSTORE_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSTORE_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSTORE_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSTORE_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.FSUB;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.GETFIELD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.GETSTATIC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.GOTO;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.GOTO_W;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2B;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2C;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2D;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2F;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2L;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.I2S;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IADD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IALOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IAND;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IASTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_4;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_5;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ICONST_M1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IDIV;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFEQ;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFGE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFGT;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFLE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFLT;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFNE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFNONNULL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IFNULL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ACMPEQ;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ACMPNE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPEQ;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPGE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPGT;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPLE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPLT;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IF_ICMPNE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IINC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ILOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ILOAD_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ILOAD_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ILOAD_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ILOAD_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IMUL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INEG;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INSTANCEOF;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEDYNAMIC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEINTERFACE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKESPECIAL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKESTATIC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEVIRTUAL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IOR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IREM;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IRETURN;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISHL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISHR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISTORE_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISTORE_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISTORE_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISTORE_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ISUB;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IUSHR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.IXOR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.JSR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.JSR_W;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.L2D;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.L2F;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.L2I;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LADD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LALOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LAND;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LASTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LCMP;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LCONST_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LCONST_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LDC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LDC2_W;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LDC_W;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LDIV;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LLOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LLOAD_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LLOAD_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LLOAD_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LLOAD_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LMUL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LNEG;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LOOKUPSWITCH;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LOR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LREM;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LRETURN;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSHL;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSHR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_0;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_1;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_3;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSUB;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LUSHR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LXOR;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.MONITORENTER;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.MONITOREXIT;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.MULTIANEWARRAY;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.NEW;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.NEWARRAY;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.NOP;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.POP;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.POP2;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTFIELD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTSTATIC;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.QUICK;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.RET;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.RETURN;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.RETURN_VALUE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SALOAD;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SASTORE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SIPUSH;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SLIM_QUICK;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SWAP;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.TABLESWITCH;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.THROW_VALUE;
-import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.WIDE;
+
 import com.oracle.truffle.espresso.classfile.bytecode.VolatileArrayAccess;
 import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.DoubleConstant;
@@ -478,6 +333,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     private final int throwValueBci;
 
     @CompilationFinal(dimensions = 1)
+    private final byte[] reifiedClassTypeParams;
+
+    @CompilationFinal(dimensions = 1)
     private final byte[] invokeReturnTypes;
     @CompilationFinal(dimensions = 1)
     private final byte[] methodParamTypes;
@@ -493,7 +351,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     @CompilerDirectives.CompilationFinal
     public static final boolean DEBUG = false;
 
-    public BytecodeNode(MethodVersion methodVersion, TypeAnalysisResult[] instOperandTypeHints, byte[] reifiedMethodTypeParams) {
+    public BytecodeNode(MethodVersion methodVersion, TypeAnalysisResult[] instOperandTypeHints, byte[] reifiedMethodTypeParams, byte[] reifiedClassTypeParams) {
         CompilerAsserts.neverPartOfCompilation();
         Method method = methodVersion.getMethod();
         assert method.hasBytecodes();
@@ -505,6 +363,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.code = customCode;
         this.bs = new BytecodeStream(code);
         this.stackOverflowErrorInfo = method.getSOEHandlerInfo();
+
+        this.reifiedClassTypeParams = reifiedClassTypeParams;
 
         Symbol<Type>[] methodSignature = method.getParsedSignature();
         int argCount = SignatureSymbols.parameterCount(methodSignature);
@@ -2940,6 +2800,58 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     // region Field read/write
 
+    private void putFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int top, StaticObject receiver, int typeParamIdx, boolean isVolatile) {
+        byte alternatedType = typeHeader;
+        if (alternatedType == 'L' && typeParamIdx >= 0) {
+            alternatedType = this.reifiedClassTypeParams[typeParamIdx];
+        }
+        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
+        CompilerAsserts.partialEvaluationConstant(isVolatile);
+        CompilerAsserts.partialEvaluationConstant(alternatedType);
+        switch (alternatedType) {
+            case 'Z':
+                boolean booleanValue = stackIntToBoolean(popInt(frame, top - 1));
+                if (isVolatile) specializedLinkedField.setBooleanVolatile(receiver, booleanValue); else specializedLinkedField.setBoolean(receiver, booleanValue);
+                break;
+            case 'B':
+                byte byteValue = (byte) popInt(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setByteVolatile(receiver, byteValue); else specializedLinkedField.setByte(receiver, byteValue);
+                break;
+            case 'C':
+                char charValue = (char) popInt(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setCharVolatile(receiver, charValue); else specializedLinkedField.setChar(receiver, charValue);
+                break;
+            case 'S':
+                short shortValue = (short) popInt(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setShortVolatile(receiver, shortValue); else specializedLinkedField.setShort(receiver, shortValue);
+                break;
+            case 'I':
+                int intValue = popInt(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setIntVolatile(receiver, intValue); else specializedLinkedField.setInt(receiver, intValue);
+                break;
+            case 'D':
+                double doubleValue = popDouble(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setDoubleVolatile(receiver, doubleValue); else specializedLinkedField.setDouble(receiver, doubleValue);
+                break;
+            case 'F':
+                float floatValue = popFloat(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setFloatVolatile(receiver, floatValue); else specializedLinkedField.setFloat(receiver, floatValue);
+                break;
+            case 'J':
+                long longValue = popLong(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setLongVolatile(receiver, longValue); else specializedLinkedField.setLong(receiver, longValue);
+                break;
+            case '[': // fall through
+            case 'L':
+                StaticObject value = popObject(frame, top - 1);
+                if (isVolatile) specializedLinkedField.setObjectVolatile(receiver, value); else specializedLinkedField.setObject(receiver, value);
+                break;
+            default:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw EspressoError.shouldNotReachHere("unexpected kind");
+        }
+    }
+
     /**
      * Returns the stack effect (slot delta) that cannot be inferred solely from the bytecode. e.g.
      * GETFIELD always pops the receiver, but the (read) result size (1 or 2) is unknown.
@@ -2967,6 +2879,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             receiver = initializeAndGetStatics(field);
         } else {
             receiver = nullCheck(popObject(frame, slot));
+        }
+
+        CompilerAsserts.partialEvaluationConstant(field.inSpecializedShape);
+
+        if (field.inSpecializedShape) {
+            LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
+            putFieldSpecialized(typeHeader, specializedLinkedField, frame, top, receiver, field.genericTypeParamIdx, field.isVolatile());
+            return -slotCount;
         }
 
         switch (typeHeader) {

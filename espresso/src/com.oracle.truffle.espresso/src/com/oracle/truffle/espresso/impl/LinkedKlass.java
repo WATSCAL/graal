@@ -234,6 +234,18 @@ public final class LinkedKlass {
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
+    public int getSpecializationIndexReadOnly(byte[] classTypeArgs) {
+        for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
+            if (matchSpecializationKey(idx, classTypeArgs)) {
+                return idx;
+            }
+        }
+
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw EspressoError.shouldNotReachHere();
+    }
+
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
     public int getSpecializationIndex(EspressoLanguage language, byte[] classTypeArgs) {
         for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
             if (matchSpecializationKey(idx, classTypeArgs)) {
@@ -257,12 +269,16 @@ public final class LinkedKlass {
         return curLen;
     }
 
-    public getSpecializedShapeAt(int idx) {
+    public StaticShape<StaticObjectFactory> getSpecializedShapeAt(int idx) {
         return this.specializedShapes[idx];
     }
 
-    public getSpecializedKeyAt(int idx) {
+    public byte[] getSpecializedKeyAt(int idx) {
         return this.specializedKeys[idx];
+    }
+
+    public LinkedField[] getSpecializedInstanceFieldsAt(int idx) {
+        return this.specializedInstanceFields[idx];
     }
 
     public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
