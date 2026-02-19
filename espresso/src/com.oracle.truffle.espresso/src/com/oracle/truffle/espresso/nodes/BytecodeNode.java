@@ -1972,7 +1972,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 // another thread beat us
                 return nodes[cpi];
             } else {
-                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
+                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke));
                 nodes[cpi] = newNode;
                 return newNode;
             }
@@ -2514,7 +2514,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         assert Bytecodes.isInvoke(opcode);
         InvokeQuickNode quick = (InvokeQuickNode) tryPatchQuick(curBCI, cpi -> getResolvedInvoke(opcode, cpi),
                         resolvedInvoke -> 
-                        dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
+                        dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke));
         return quick;
     }
 
@@ -2572,7 +2572,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 // Might be racy, as read is not volatile, but redoing the work should be OK.
                 return currentQuick;
             }
-            BaseQuickNode invoke = dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, false);
+            BaseQuickNode invoke = dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke);
             nodes[nodeIndex] = currentQuick.replace(invoke);
             return invoke;
         });
@@ -2589,21 +2589,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 }
             }
         });
-    }
-
-    // region quickenForeign
-    public int quickenGetField(final VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex, Field field) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert opcode == GETFIELD;
-        BaseQuickNode getField = tryPatchQuick(curBCI, () -> new QuickenedGetFieldNode(top, curBCI, statementIndex, field));
-        return getField.execute(frame, false) - Bytecodes.stackEffectOf(opcode);
-    }
-
-    public int quickenPutField(VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex, Field field) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert opcode == PUTFIELD;
-        BaseQuickNode putField = tryPatchQuick(curBCI, () -> new QuickenedPutFieldNode(top, curBCI, field, statementIndex));
-        return putField.execute(frame, false) - Bytecodes.stackEffectOf(opcode);
     }
 
     private int quickenArrayLength(VirtualFrame frame, int top, int curBCI) {
@@ -2678,7 +2663,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     // endregion quickenForeign
 
-    private InvokeQuickNode dispatchQuickened(int top, int curBCI, int opcode, int statementIndex, ResolvedInvoke resolvedInvoke, boolean allowBytecodeInlining) {
+    private InvokeQuickNode dispatchQuickened(int top, int curBCI, int opcode, int statementIndex, ResolvedInvoke resolvedInvoke) {
         ResolvedCall<Klass, Method, Field> resolvedCall = resolvedInvoke.resolvedCall();
         Method resolved = resolvedCall.getResolvedMethod();
         CallKind callKind = resolvedCall.getCallKind();
@@ -2700,16 +2685,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             }
         }
 
-        // Skip inlined nodes if instrumentation is live.
-        // Lock must be owned for correctness.
         assert lockIsHeld();
-        boolean tryBytecodeLevelInlining = this.instrumentation == null && allowBytecodeInlining;
-        if (tryBytecodeLevelInlining) {
-            InlinedMethodNode node = InlinedMethodNode.createFor(resolvedCall, top, opcode, curBCI, statementIndex);
-            if (node != null) {
-                return node;
-            }
-        }
 
         if (resolved.isPolySignatureIntrinsic()) {
             return new InvokeHandleNode(resolved, resolvedInvoke.invoker(), top, curBCI);
@@ -2990,19 +2966,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (mode.isStatic()) {
             receiver = initializeAndGetStatics(field);
         } else {
-            if (!noForeignObjects.isValid()) {
-                // Do not release the object, it might be read again in PutFieldNode
-                receiver = nullCheck(peekObject(frame, slot));
-                if (receiver.isForeignObject()) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    // Restore the receiver for quickening.
-                    putObject(frame, slot, receiver);
-                    return quickenPutField(frame, top, curBCI, opcode, statementIndex, field);
-                }
-                popObject(frame, slot); // clear the slot
-            } else {
-                receiver = nullCheck(popObject(frame, slot));
-            }
+            receiver = nullCheck(popObject(frame, slot));
         }
 
         switch (typeHeader) {
@@ -3100,19 +3064,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (mode.isStatic()) {
             receiver = initializeAndGetStatics(field);
         } else {
-            if (!noForeignObjects.isValid()) {
-                // Do not release the object yet, it might be read again in GetFieldNode
-                receiver = nullCheck(peekObject(frame, slot));
-                if (receiver.isForeignObject()) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    // Restore the receiver for quickening.
-                    putObject(frame, slot, receiver);
-                    return quickenGetField(frame, top, curBCI, opcode, statementIndex, field);
-                }
-                popObject(frame, slot); // clear the slot
-            } else {
-                receiver = nullCheck(popObject(frame, slot));
-            }
+            receiver = nullCheck(popObject(frame, slot));
         }
 
         if (instrumentation != null) {

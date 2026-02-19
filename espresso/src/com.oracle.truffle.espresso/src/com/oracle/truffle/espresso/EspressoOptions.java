@@ -312,12 +312,6 @@ public final class EspressoOptions {
                     usageSyntax = "true|false") //
     public static final OptionKey<Boolean> UseTRegex = new OptionKey<>(false);
 
-    @Option(help = "Speculatively inline field accessors.", //
-                    category = OptionCategory.EXPERT, //
-                    stability = OptionStability.EXPERIMENTAL, //
-                    usageSyntax = "false|true") //
-    public static final OptionKey<Boolean> BytecodeLevelInlining = new OptionKey<>(true);
-
     @Option(help = "Enable inlining through method handle calls.", //
                     category = OptionCategory.EXPERT, //
                     stability = OptionStability.EXPERIMENTAL, //

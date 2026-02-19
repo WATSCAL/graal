@@ -83,7 +83,6 @@ public final class EspressoEnv {
     // Checkstyle: stop field name check
 
     // Performance control
-    public final boolean bytecodeLevelInlining;
     public final boolean InlineMethodHandle;
     public final boolean SplitMethodHandles;
 
@@ -129,7 +128,6 @@ public final class EspressoEnv {
         this.shouldReportVMEvents = JDWPOptions != null;
         this.eventListener = new VMEventListenerImpl();
 
-        this.bytecodeLevelInlining = JDWPOptions == null && env.getOptions().get(EspressoOptions.BytecodeLevelInlining);
         this.InlineMethodHandle = JDWPOptions == null && env.getOptions().get(EspressoOptions.InlineMethodHandle);
         this.SplitMethodHandles = JDWPOptions == null && env.getOptions().get(EspressoOptions.SplitMethodHandles);
         this.EnableSignals = env.getOptions().get(EspressoOptions.EnableSignals);
