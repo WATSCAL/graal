@@ -2801,12 +2801,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     // region Field read/write
 
     private void putFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int top, StaticObject receiver, int typeParamIdx, boolean isVolatile) {
+        CompilerAsserts.partialEvaluationConstant(typeHeader);
+        CompilerAsserts.partialEvaluationConstant(top);
+        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
+        CompilerAsserts.partialEvaluationConstant(isVolatile);
         byte alternatedType = typeHeader;
         if (alternatedType == 'L' && typeParamIdx >= 0) {
             alternatedType = this.reifiedClassTypeParams[typeParamIdx];
         }
-        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
-        CompilerAsserts.partialEvaluationConstant(isVolatile);
         CompilerAsserts.partialEvaluationConstant(alternatedType);
         switch (alternatedType) {
             case 'Z':
@@ -2961,6 +2963,38 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         return -slotCount;
     }
 
+    private void getFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int resultAt, StaticObject receiver, int typeParamIdx, boolean isVolatile) {
+        CompilerAsserts.partialEvaluationConstant(typeHeader);
+        CompilerAsserts.partialEvaluationConstant(resultAt);
+        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
+        CompilerAsserts.partialEvaluationConstant(isVolatile);
+        byte alternatedType = typeHeader;
+        if (alternatedType == 'L' && typeParamIdx >= 0) {
+            alternatedType = this.reifiedClassTypeParams[typeParamIdx];
+        }
+        CompilerAsserts.partialEvaluationConstant(alternatedType);
+        
+        switch (alternatedType) {
+            case 'Z' : putInt(frame, resultAt, (isVolatile ? specializedLinkedField.getBooleanVolatile(receiver) : specializedLinkedField.getBoolean(receiver)) ? 1 : 0); break;
+            case 'B' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getByteVolatile(receiver) : specializedLinkedField.getByte(receiver));      break;
+            case 'C' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getCharVolatile(receiver) : specializedLinkedField.getChar(receiver));      break;
+            case 'S' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getShortVolatile(receiver) : specializedLinkedField.getShort(receiver));     break;
+            case 'I' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getIntVolatile(receiver) : specializedLinkedField.getInt(receiver));       break;
+            case 'D' : putDouble(frame, resultAt, isVolatile ? specializedLinkedField.getDoubleVolatile(receiver) : specializedLinkedField.getDouble(receiver)); break;
+            case 'F' : putFloat(frame, resultAt, isVolatile ? specializedLinkedField.getFloatVolatile(receiver) : specializedLinkedField.getFloat(receiver));   break;
+            case 'J' : putLong(frame, resultAt, isVolatile ? specializedLinkedField.getLongVolatile(receiver) : specializedLinkedField.getLong(receiver));     break;
+            case '[' : // fall through
+            case 'L' : {
+                StaticObject value = (StaticObject) (isVolatile ? specializedLinkedField.getObjectVolatile(receiver) : specializedLinkedField.getObject(receiver));
+                putObject(frame, resultAt, value);
+                break;
+            }
+            default:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw EspressoError.shouldNotReachHere("unexpected kind");
+        }
+    }
+
     /**
      * Returns the stack effect (slot delta) that cannot be inferred solely from the bytecode. e.g.
      * PUTFIELD always pops the receiver, but the result size (1 or 2) is unknown.
@@ -2994,6 +3028,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         int resultAt = mode.isStatic() ? top : (top - 1);
         // @formatter:off
         byte typeHeader = field.getType().byteAt(0);
+
+        CompilerAsserts.partialEvaluationConstant(field.inSpecializedShape);
+        if (field.inSpecializedShape) {
+            LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
+            getFieldSpecialized(typeHeader, specializedLinkedField, frame, resultAt, receiver, field.genericTypeParamIdx, field.isVolatile());
+            return slotCount;
+        }
+
         switch (typeHeader) {
             case 'Z' : putInt(frame, resultAt, InterpreterToVM.getFieldBoolean(receiver, field) ? 1 : 0); break;
             case 'B' : putInt(frame, resultAt, InterpreterToVM.getFieldByte(receiver, field));      break;
