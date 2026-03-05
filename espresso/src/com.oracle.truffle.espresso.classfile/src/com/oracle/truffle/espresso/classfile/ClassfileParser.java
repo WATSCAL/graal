@@ -23,6 +23,7 @@
 package com.oracle.truffle.espresso.classfile;
 
 import java.io.IOException;
+import java.lang.classfile.constantpool.ConstantPool;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +82,7 @@ import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceDebugExtensionAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.StackMapTableAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassGenericFieldListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
@@ -1242,11 +1244,6 @@ public final class ClassfileParser {
                     throw classFormatError("Duplicate ClassTypeParamList attribute");
                 }
                 classAttributes[i] = classTypeParamList = parseClassTypeParamList(attributeName);
-            } else if (attributeName.equals(ParserNames.ClassGenericFieldList)) {
-                if (classGenericFieldList != null) {
-                    throw classFormatError("Duplicate ClassGenericFieldList attribute");
-                }
-                classAttributes[i] = classGenericFieldList = parseClassGenericFieldList(attributeName);
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (majorVersion >= JAVA_7_VERSION && attributeName.equals(ParserNames.BootstrapMethods)) {
                     if (bootstrapMethods != null) {
@@ -1361,29 +1358,6 @@ public final class ClassfileParser {
     }
 
     /*
-    ClassGenericFieldList_attribute {
-        u2 attribute_name_index;
-        u4 attribute_length;
-        u2 class_generic_field_num;
-        {
-            u2 field_ref_index;
-            u2 class_type_param_index;
-        } generic_fields_info[class_generic_field_num];
-    }
-    */
-    private ClassGenericFieldListAttribute parseClassGenericFieldList(Symbol<Name> name) {
-        assert ParserNames.ClassGenericFieldList.equals(name);
-        int entryCount = stream.readU2();
-        ClassGenericFieldListAttribute.Entry[] entries = new ClassGenericFieldListAttribute.Entry[entryCount];
-        for (int i = 0; i < entryCount; ++i) {
-            FieldRefConstant.Indexes fieldRef = pool.fieldAt(stream.readU2());
-            int typeParamIndex = stream.readU2();
-            entries[i] = new ClassGenericFieldListAttribute.Entry(fieldRef, typeParamIndex);
-        }
-        return new ClassGenericFieldListAttribute(name, entries);
-    }
-
-    /*
     MethodParameterType_attribute {
         u2 attribute_name_index;
         u4 attribute_length;
@@ -1406,6 +1380,50 @@ public final class ClassfileParser {
             } // else remain null
         }
         return new MethodParameterTypeAttribute(name, paramTypes);
+    }
+
+    /*
+    BCNewTypeArgs_attribute {
+        u2 attribute_name_index;
+        u4 attribute_length;
+        u2 entry_count;
+        {
+            u2 bytecode_offset;
+            u2 class_count;
+            {
+                u2 local_variable_count;
+                u2 local_variable_indices[local_variable_count];
+            } class_reified_values[class_count];
+        } entires[entry_count];
+    }
+    */
+    private BCNewTypeArgsAttribute parseBCNewTypeArgsAttribute(Symbol<Name> name) {
+        assert ParserNames.BCNewTypeArgs.equals(name);
+        int entry_count = stream.readU2();
+        BCNewTypeArgsAttribute.Entry[] entries = new BCNewTypeArgsAttribute.Entry[entry_count];
+        for (int i = 0; i < entry_count; ++i) {
+            int bcOffset = stream.readU2();
+            int layerCount = stream.readU2();
+            int[][] allLayers = new int[layerCount][];
+            int totalLen = 0;
+            for (int j = 0; j < layerCount; ++j) {
+                int curLayerLen = stream.readU2();
+                totalLen += curLayerLen;
+                allLayers[j] = new int[curLayerLen];
+                for (int k = 0; k < curLayerLen; ++i) {
+                    allLayers[j][k] = stream.readU2();
+                }
+            }
+            int[] concat = new int[totalLen];
+            int curPtr = 0;
+            for (int j = 0; j < layerCount; ++j) {
+                for (int v : allLayers[j]) {
+                    concat[curPtr++] = v;
+                }
+            }
+            entries[i] = new BCNewTypeArgsAttribute.Entry(bcOffset, concat);
+        }
+        return new BCNewTypeArgsAttribute(name, entries);
     }
 
     /*

@@ -91,6 +91,7 @@ import com.oracle.truffle.espresso.classfile.attributes.ExceptionsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.LocalVariableTable;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
@@ -295,6 +296,10 @@ public final class Method extends Member<Signature> implements MethodRef, Truffl
 
     public ExtraBoxUnboxAttribute getExtraBoxUnboxAttribute() {
         return (ExtraBoxUnboxAttribute) getAttribute(ExtraBoxUnboxAttribute.NAME);
+    }
+
+    public BCNewTypeArgsAttribute getBCNewTypeArgsAttribute() {
+        return (BCNewTypeArgsAttribute) getAttribute(BCNewTypeArgsAttribute.NAME);
     }
 
     @Override

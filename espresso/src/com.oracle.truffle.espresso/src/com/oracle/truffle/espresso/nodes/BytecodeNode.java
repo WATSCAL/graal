@@ -64,6 +64,7 @@ import com.oracle.truffle.espresso.classfile.ExceptionHandler;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.BootstrapMethodsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
@@ -347,6 +348,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     private final boolean[] ignoreInvoke;
     @CompilationFinal(dimensions = 1)
     private final int[] stackTopAdjustment;
+    @CompilationFinal(dimensions = 2)
+    private final int[][] allocTypeArgSlotIndices;
 
     @CompilerDirectives.CompilationFinal
     public static final boolean DEBUG = false;
@@ -419,6 +422,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         }
                     }
                 }
+            }
+        }
+
+        this.allocTypeArgSlotIndices = new int[this.bs.endBCI()][];
+        BCNewTypeArgsAttribute allocTypeArgsAttr = method.getBCNewTypeArgsAttribute();
+        if (allocTypeArgsAttr != null) {
+            for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
+                this.allocTypeArgSlotIndices[entry.bcOffset()] = entry.localSlotIndices();
             }
         }
 
@@ -1389,7 +1400,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         break;
                     case NEW         :
                         Klass klass = resolveType(NEW, bs.readCPI2(curBCI));
-                        putObject(frame, top, newReferenceObject(klass)); break;
+                        putObject(frame, top, newReferenceObject(curBCI, klass)); break;
                     case NEWARRAY    :
                         byte jvmPrimitiveType = bs.readByte(curBCI);
                         int length = popInt(frame, top - 1);
@@ -1789,10 +1800,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
-    private StaticObject newReferenceObject(Klass klass) {
+    private StaticObject newReferenceObject(int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
-        return getAllocator().createNew((ObjectKlass) klass);
+        if (this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length > 0) {
+            return getAllocator().createNewSpecialized((ObjectKlass) klass, this.allocTypeArgSlotIndices[curBCI]);
+        } else {
+            return getAllocator().createNew((ObjectKlass) klass);
+        }
     }
 
     /*

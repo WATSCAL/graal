@@ -131,7 +131,7 @@ public final class ParserSymbols {
         public static final Symbol<Name> clone = SYMBOLS.putName("clone");
         public static final Symbol<Name> MethodTypeParameterCount = SYMBOLS.putName("MethodTypeParameterCount");
         public static final Symbol<Name> ClassTypeParamList = SYMBOLS.putName("ClassTypeParamList");
-        public static final Symbol<Name> ClassGenericFieldList = SYMBOLS.putName("ClassGenericFieldList");
+        public static final Symbol<Name> BCNewTypeArgs = SYMBOLS.putName("BCNewTypeArgs");
         public static final Symbol<Name> MethodParameterType = SYMBOLS.putName("MethodParameterType");
         public static final Symbol<Name> InvokeReturnType = SYMBOLS.putName("InvokeReturnType");
         public static final Symbol<Name> ExtraBoxUnbox = SYMBOLS.putName("ExtraBoxUnbox");
