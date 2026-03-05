@@ -4,28 +4,27 @@ import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.ParserSymbols.ParserNames;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
-import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
 
 
-public class ClassGenericFieldListAttribute extends Attribute{
-    public static final Symbol<Name> NAME = ParserNames.ClassGenericFieldList;
+public class BCNewTypeArgsAttribute extends Attribute{
+    public static final Symbol<Name> NAME = ParserNames.BCNewTypeArgs;
 
-    public record Entry(FieldRefConstant.Indexes field, int classTypeParamIndex) {}
+    public record Entry(int bcOffset, int[] localSlotIndices) {}
 
     private final Entry[] entries;
 
-    public ClassGenericFieldListAttribute(Symbol<Name> name, Entry[] entries) {
+    public BCNewTypeArgsAttribute(Symbol<Name> name, Entry[] entries) {
         super(name, null);
         this.entries = entries;
     }
 
-    public Entry[] getFieldTypes() {
+    public Entry[] getEntires() {
         return entries;
     }
 
     @Override
     public String toString() {
-        return "FieldTypeAttribute{" +
+        return "BCNewTypeArgsAttribute{" +
                         "..." +
                         '}';
     }
