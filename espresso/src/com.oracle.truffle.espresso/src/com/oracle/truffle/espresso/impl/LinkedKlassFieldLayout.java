@@ -86,6 +86,12 @@ final class LinkedKlassFieldLayout {
             linkedFields[index] = field;
         }
 
+        private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields) {
+            LinkedField field = new LinkedField(parserField, slot, idMode);
+            builder.property(field, LinkedField.getPropertyType(parserField), storeAsFinal(parserKlass, parserField));
+            linkedFields[index] = field;
+        }
+
         SpecializedLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, byte[] classTypeArgs) {
             StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
 
@@ -103,8 +109,7 @@ final class LinkedKlassFieldLayout {
                     byte alteredType = classTypeArgs[index];
                     assert !parserField.isStatic();
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
-                }
-                if (!parserField.isStatic()) {
+                } else if (!parserField.isStatic()) {
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
                 }
             }
