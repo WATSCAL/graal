@@ -109,8 +109,7 @@ final class LinkedKlassFieldLayout {
                     byte alteredType = classTypeArgs[index];
                     assert !parserField.isStatic();
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
-                }
-                if (!parserField.isStatic()) {
+                } else if (!parserField.isStatic()) {
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
                 }
             }
