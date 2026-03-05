@@ -10,6 +10,7 @@ import com.oracle.truffle.espresso.analysis.BlockIterator;
 import com.oracle.truffle.espresso.analysis.BlockIteratorClosure;
 import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
@@ -67,8 +68,6 @@ public class TypePropagationClosure extends BlockIteratorClosure{
     private final AbstractSet<Integer> ignoredCalls;
     private final int codeLength;
     private boolean nonTrivial;
-
-    private final boolean debug = false;
 
     public TypePropagationClosure(
                     EspressoContext ctx,
@@ -181,7 +180,6 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                 case ALOAD_3:
                     int aloadIndex = opcode == ALOAD ? bs.readLocalIndex(bci) : (opcode - ALOAD_0);
                     this.resAtBCI[bci] = new TypeAnalysisResult(new TypeHints.TypeB[]{state.locals[aloadIndex]});
-                    if (debug) System.out.println("Aload index: " + aloadIndex + " locals at index: " + state.locals[aloadIndex]);
                     state.stack[state.stackTop] = state.locals[aloadIndex];
                     state.stackTop++;
                     break;
@@ -196,23 +194,29 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                     //     getMethod().getContext().getClassRedefinition().check();
                     //     field = getConstantPool().resolveFieldAndUpdate(getMethod().getDeclaringKlass(), cpi, field);
                     // }
-                    if (debug) System.out.println("Resolved Field: " + field.getName() + " at bci: " + bci);
                     int fieldSlotCount = field.getKind().getSlotCount();
                     for (int i = 0; i < -Bytecodes.stackEffectOf(opcode); i++) {
                         state.stackTop--;
                         state.stack[state.stackTop] = null;
                     }
                     assert state.stackTop >= 0;
+
+
                     if (opcode == GETSTATIC || opcode == GETFIELD){
-                        //pushes onto the stack:
+                        TypeHints.TypeB alternatedFieldType = null;
+                        FieldTypeAttribute curFieldTypeAttr = field.getFieldTypeAttribute();
+                        if (field.getKind() == JavaKind.Object && curFieldTypeAttr != null) {
+                            alternatedFieldType = curFieldTypeAttr.getFieldType();
+                        }
+                        // push to the stack:
                         if (state.stackTop + fieldSlotCount > maxStack) {
                             throw new AssertionError("Stack overflow at bci: " + bci);
                         }
                         for (int i = 0; i < fieldSlotCount; i++){
-                            state.stack[state.stackTop++] = null; //TODO: change to type of the field
+                            state.stack[state.stackTop++] = alternatedFieldType;
                         }
-                    } else if (opcode == PUTFIELD || opcode == PUTSTATIC){ // TODO: record the stack top types to resAtBCI
-                        //pops from the statck:
+                    } else if (opcode == PUTFIELD || opcode == PUTSTATIC){
+                        // pop from the statck:
                         if (state.stackTop < fieldSlotCount) {
                             throw new AssertionError("Not enough stack elements at bci: " + bci);
                         }

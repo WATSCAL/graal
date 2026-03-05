@@ -226,6 +226,10 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
         return linkedField.getAttribute(attrName);
     }
 
+    public final FieldTypeAttribute getFieldTypeAttribute() {
+        return getAttribute(FieldTypeAttribute.NAME);
+    }
+
     public static Field getReflectiveFieldRoot(StaticObject seed, Meta meta) {
         StaticObject curField = seed;
         Field target = null;
