@@ -247,6 +247,14 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
         }
     }
 
+    public final Attribute getAttribute(Symbol<Name> attrName) {
+        return linkedField.getAttribute(attrName);
+    }
+
+    public final FieldTypeAttribute getFieldTypeAttribute() {
+        return getAttribute(FieldTypeAttribute.NAME);
+    }
+
     //@formatter:off
     /// Gets the [Field] value associated with `reflectField`.
     ///
