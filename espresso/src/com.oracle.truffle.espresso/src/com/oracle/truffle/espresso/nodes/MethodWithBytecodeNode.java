@@ -127,7 +127,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             return this.bytecodeNode.execute(frame);
         }
         byte[] methodTypeParams = collectMethodTypeParams(args);
-        byte[] classTypeParams = needClassTypeParams ? collectClassTypeParams((StaticObject) args[0]) : EMPTY_BYTE_ARRAY;
+        byte[] classTypeParams = this.classTypeParamCount > 0 ? collectClassTypeParams((StaticObject) args[0]) : EMPTY_BYTE_ARRAY;
         
         for (int i = 0; i < cacheKeys.length; i++){
             if (matchKey(i, methodTypeParams, classTypeParams)) {
