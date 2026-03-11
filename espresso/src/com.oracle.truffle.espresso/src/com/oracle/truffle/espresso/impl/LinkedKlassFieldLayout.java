@@ -61,7 +61,7 @@ final class LinkedKlassFieldLayout {
 
     final int fieldTableLength;
 
-    public final class SpecializedLayout {
+    public static final class SpecializedLayout {
         @CompilationFinal(dimensions = 1)
         final LinkedField[] instanceFields;
 
@@ -105,10 +105,10 @@ final class LinkedKlassFieldLayout {
 
             for (ParserField parserField : parserKlass.getFields()) {
                 if (parserField.getFieldTypeAttribute() != null) {
-                    int index = parserField.getFieldTypeAttribute().getFieldType().getIndex();
+                    int index = parserField.getFieldTypeAttribute().classTypeParamIndex;
                     byte alteredType = classTypeArgs[index];
                     assert !parserField.isStatic();
-                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, reifiedType);
+                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, alteredType);
                 } else if (!parserField.isStatic()) {
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
                 }
@@ -124,7 +124,7 @@ final class LinkedKlassFieldLayout {
             if (superKlass == null) {
                 instanceShape = instanceBuilder.build(StaticObject.class, StaticObjectFactory.class);
             } else {
-                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(language classTypeArgs));
+                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(language, classTypeArgs));
             }
         }
     }

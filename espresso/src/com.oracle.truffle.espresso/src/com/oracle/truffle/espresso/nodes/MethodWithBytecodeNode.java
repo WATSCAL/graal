@@ -95,11 +95,11 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         if (this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
-            this.classTypeParamCount = methodVersion.getMethod().hasReceiver() ? methodVersion.getDeclaringKlass().getLinkedKlass().getAllTypeParamNum() : 0;
+            this.classTypeParamCount = methodVersion.getMethod().hasReceiver() ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
             this.specializations = new BytecodeNode[0];
             this.cacheKeys = new byte[0][];
         } else {
-            BytecodeNode t = new BytecodeNode(methodVersion, null, new byte[]{});
+            BytecodeNode t = new BytecodeNode(methodVersion, null, TypeHints.EMPTY_TYPE_ARGS, TypeHints.EMPTY_TYPE_ARGS);
             this.bytecodeNode = t;
             this.frameDescriptor = t.getFrameDescriptor();
             this.classTypeParamCount = 0;

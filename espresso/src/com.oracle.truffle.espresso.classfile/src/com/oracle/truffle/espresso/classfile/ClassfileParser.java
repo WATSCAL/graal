@@ -23,7 +23,6 @@
 package com.oracle.truffle.espresso.classfile;
 
 import java.io.IOException;
-import java.lang.classfile.constantpool.ConstantPool;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +82,6 @@ import com.oracle.truffle.espresso.classfile.attributes.SourceDebugExtensionAttr
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.StackMapTableAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.ClassGenericFieldListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
@@ -1083,6 +1081,8 @@ public final class ClassfileParser {
                     throw classFormatError("Duplicate MethodParameterType attribute");
                 }
                 methodAttributes[i] = methodParameterType = parseMethodParameterType(attributeName);
+            } else if (attributeName.equals(ParserNames.BCNewTypeArgs)) {
+                methodAttributes[i] = parseBCNewTypeArgsAttribute(attributeName);
             } else if (attributeName.equals(ParserNames.InvokeReturnType)){
                 if (invokeReturnType != null){
                     throw classFormatError("Duplicate InvokeReturnType attribute");
@@ -1211,7 +1211,6 @@ public final class ClassfileParser {
         RecordAttribute record = null;
         //newly added class attribute
         ClassTypeParamListAttribute classTypeParamList = null;
-        ClassGenericFieldListAttribute classGenericFieldList = null;
 
         CommonAttributeParser commonAttributeParser = new CommonAttributeParser(InfoType.Class);
 
@@ -1399,9 +1398,9 @@ public final class ClassfileParser {
     */
     private BCNewTypeArgsAttribute parseBCNewTypeArgsAttribute(Symbol<Name> name) {
         assert ParserNames.BCNewTypeArgs.equals(name);
-        int entry_count = stream.readU2();
-        BCNewTypeArgsAttribute.Entry[] entries = new BCNewTypeArgsAttribute.Entry[entry_count];
-        for (int i = 0; i < entry_count; ++i) {
+        int entryCount = stream.readU2();
+        BCNewTypeArgsAttribute.Entry[] entries = new BCNewTypeArgsAttribute.Entry[entryCount];
+        for (int i = 0; i < entryCount; ++i) {
             int bcOffset = stream.readU2();
             int layerCount = stream.readU2();
             int[][] allLayers = new int[layerCount][];
@@ -1410,7 +1409,7 @@ public final class ClassfileParser {
                 int curLayerLen = stream.readU2();
                 totalLen += curLayerLen;
                 allLayers[j] = new int[curLayerLen];
-                for (int k = 0; k < curLayerLen; ++i) {
+                for (int k = 0; k < curLayerLen; ++k) {
                     allLayers[j][k] = stream.readU2();
                 }
             }
@@ -1474,7 +1473,7 @@ public final class ClassfileParser {
         assert ParserNames.FieldType.equals(name);
         byte kind = (byte) stream.readU1();
         int index = stream.readU2();
-        return new FieldTypeAttribute(name, kind != TypeHints.EMPTY_KIND ? new TypeHints.TypeB(kind, index) : null);
+        return kind == TypeHints.REFERENCE ? new FieldTypeAttribute(name, index) : null;
     }
 
     private LineNumberTableAttribute parseLineNumberTable(Symbol<Name> name) {
@@ -2037,7 +2036,6 @@ public final class ClassfileParser {
                     throw classFormatError("Duplicate FieldType attribute");
                 }
                 fieldAttributes[i] = fieldTypeAttribute = parseFieldType(attributeName);
-                System.out.println("FieldType attribute: " + fieldTypeAttribute + " for field: " + name + " in class: " + classType.toString());
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (attributeName.equals(ParserNames.RuntimeVisibleAnnotations)) {
                     RuntimeVisibleAnnotationsAttribute annotations = commonAttributeParser.parseRuntimeVisibleAnnotations(attributeSize, AnnotationLocation.Field);

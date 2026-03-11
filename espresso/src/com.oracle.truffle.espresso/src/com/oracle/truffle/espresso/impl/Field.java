@@ -25,6 +25,7 @@ package com.oracle.truffle.espresso.impl;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -109,7 +110,7 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
         this.inSpecializedShape = holder.linkedKlass.allTypeParamNum > 0 && !isStatic;
 
         FieldTypeAttribute fieldTypeAttr = linkedField.getParserField().getFieldTypeAttribute();
-        this.genericTypeParamIdx = fieldTypeAttr != null ? fieldTypeAttr.getFieldType().getIndex() : -1;
+        this.genericTypeParamIdx = fieldTypeAttr != null ? fieldTypeAttr.classTypeParamIndex : -1;
     }
 
     public final LinkedField getSpecializedLinkedField(byte[] classTypeParams) {
@@ -227,7 +228,7 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
     }
 
     public final FieldTypeAttribute getFieldTypeAttribute() {
-        return getAttribute(FieldTypeAttribute.NAME);
+        return (FieldTypeAttribute) getAttribute(FieldTypeAttribute.NAME);
     }
 
     public static Field getReflectiveFieldRoot(StaticObject seed, Meta meta) {

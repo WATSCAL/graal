@@ -429,6 +429,7 @@ public final class EspressoFrame {
                 case 'D' : args[i + extraParam] = popDouble(frame, argAt); --argAt; break;
                 case '[' : // fall through
                 case 'L' :
+                    // System.out.println(argCount + " pop " + argsType[i] + " at " + i);
                     switch (argsType[i]) {
                         case TypeHints.BYTE:
                             args[i + extraParam] = (byte) popInt(frame, argAt);

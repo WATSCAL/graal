@@ -32,8 +32,8 @@ public final class EnumConstantField extends Field {
 
     @CompilationFinal private int initState;
 
-    public EnumConstantField(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool) {
-        super(holder, linkedField, pool);
+    public EnumConstantField(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isStatic, int linkedFieldIdx) {
+        super(holder, linkedField, pool, isStatic, linkedFieldIdx);
         assert TypeSymbols.isReference(linkedField.getType());
     }
 

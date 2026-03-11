@@ -157,6 +157,7 @@ import com.oracle.truffle.espresso.constantpool.ResolvedWithInvokerClassMethodRe
 import com.oracle.truffle.espresso.constantpool.RuntimeConstantPool;
 import com.oracle.truffle.espresso.impl.ArrayKlass;
 import com.oracle.truffle.espresso.impl.Field;
+import com.oracle.truffle.espresso.impl.LinkedField;
 import com.oracle.truffle.espresso.impl.Klass;
 import com.oracle.truffle.espresso.impl.Method;
 import com.oracle.truffle.espresso.impl.Method.MethodVersion;
@@ -402,6 +403,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 if (instOperandTypeHints[i] != null) {
                     this.invokeReturnTypes[i] = (instOperandTypeHints[i].invokeReturnType != null) ? instOperandTypeHints[i].invokeReturnType.resolve(reifiedMethodTypeParams) : 0;
                     this.ignoreInvoke[i] = instOperandTypeHints[i].ignoreInvoke;
+                    if (this.ignoreInvoke[i]) {
+                        System.out.println("ignore " + i + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
+                    }
                     this.stackTopAdjustment[i] = instOperandTypeHints[i].stackTopAdjustment;
                     if (instOperandTypeHints[i].operands != null) {
                         int len = instOperandTypeHints[i].operands.length;
@@ -497,6 +501,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 case '[' : // fall through
                 case 'L' : {
                         CompilerAsserts.partialEvaluationConstant(methodParamTypes[i]);
+                        // System.out.println(argCount + " fetch " + methodParamTypes[i] + " at " + i);
                         switch (this.methodParamTypes[i]){
                             case TypeHints.BYTE:
                                 setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot])); break;
@@ -1379,6 +1384,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     case INVOKESTATIC:  // fall through
                     case INVOKEINTERFACE:
                         if (this.ignoreInvoke[curBCI]) {
+                            // System.out.println("ignore invoke at " + curBCI + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
                             if (this.stackTopAdjustment[curBCI] != 0) {
                                 assert this.instOperandTypes[curBCI][0] == 'J' || this.instOperandTypes[curBCI][0] == 'D';
                                 if (this.instOperandTypes[curBCI][0] == 'J') {
@@ -1400,7 +1406,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         break;
                     case NEW         :
                         Klass klass = resolveType(NEW, bs.readCPI2(curBCI));
-                        putObject(frame, top, newReferenceObject(curBCI, klass)); break;
+                        putObject(frame, top, newReferenceObject(frame, curBCI, klass)); break;
                     case NEWARRAY    :
                         byte jvmPrimitiveType = bs.readByte(curBCI);
                         int length = popInt(frame, top - 1);
@@ -1800,11 +1806,16 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
-    private StaticObject newReferenceObject(int curBCI, Klass klass) {
+    private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
         if (this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length > 0) {
-            return getAllocator().createNewSpecialized((ObjectKlass) klass, this.allocTypeArgSlotIndices[curBCI]);
+            int len = this.allocTypeArgSlotIndices[curBCI].length;
+            byte[] allocTypeArgs = new byte[len];
+            for (int i = 0; i < len; ++i) {
+                allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
+            }
+            return getAllocator().createNewSpecialized((ObjectKlass) klass, allocTypeArgs);
         } else {
             return getAllocator().createNew((ObjectKlass) klass);
         }
@@ -3048,6 +3059,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (field.inSpecializedShape) {
             LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
             getFieldSpecialized(typeHeader, specializedLinkedField, frame, resultAt, receiver, field.genericTypeParamIdx, field.isVolatile());
+            int slotCount = (typeHeader == 'J' || typeHeader == 'D') ? 2 : 1;
             return slotCount;
         }
 

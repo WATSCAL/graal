@@ -24,6 +24,7 @@ package com.oracle.truffle.espresso.impl;
 
 import java.util.WeakHashMap;
 
+import com.oracle.truffle.espresso.meta.EspressoError;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.staticobject.StaticShape;
 import com.oracle.truffle.espresso.constantpool.RuntimeConstantPool;
@@ -40,7 +41,7 @@ public class RedefineAddedField extends Field {
     private final WeakHashMap<StaticObject, FieldStorageObject> storageObjects = new WeakHashMap<>(1);
 
     public RedefineAddedField(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isDelegation) {
-        super(holder, linkedField, pool);
+        super(holder, linkedField, pool, false, -1);
         if (!isDelegation) {
             StaticShape.Builder shapeBuilder = StaticShape.newBuilder(holder.getKlass().getLanguage());
             shapeBuilder.property(linkedField, LinkedField.getPropertyType(linkedField.getParserField()), linkedField.getParserField().isFinal());
@@ -55,6 +56,7 @@ public class RedefineAddedField extends Field {
         } else {
             staticStorageObject = null;
         }
+        throw EspressoError.shouldNotReachHere();
     }
 
     public static Field createDelegationField(Field field) {

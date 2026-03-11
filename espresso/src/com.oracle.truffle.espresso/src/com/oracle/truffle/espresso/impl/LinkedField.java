@@ -37,7 +37,7 @@ import com.oracle.truffle.espresso.classfile.descriptors.TypeSymbols;
 import com.oracle.truffle.espresso.meta.EspressoError;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
 
-final class LinkedField extends StaticProperty {
+public final class LinkedField extends StaticProperty {
 
     enum IdMode {
         REGULAR,

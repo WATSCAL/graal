@@ -217,7 +217,7 @@ public final class ObjectKlass extends Klass {
             // User-defined static non-final fields should remain modifiable.
             if (superKlass == getMeta().java_lang_Enum && !isEnumValuesField(lkField) //
                             && TypeSymbols.isReference(lkField.getType()) && Modifier.isFinal(lkField.getFlags())) {
-                staticField = new EnumConstantField(klassVersion, lkField, pool);
+                staticField = new EnumConstantField(klassVersion, lkField, pool, true, i);
             } else {
                 staticField = new Field(klassVersion, lkField, pool, true, i);
             }
