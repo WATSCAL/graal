@@ -9,6 +9,7 @@ import com.oracle.truffle.espresso.analysis.AnalysisProcessor;
 import com.oracle.truffle.espresso.analysis.BlockIterator;
 import com.oracle.truffle.espresso.analysis.BlockIteratorClosure;
 import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
+import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
@@ -206,7 +207,7 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                         TypeHints.TypeB alternatedFieldType = null;
                         FieldTypeAttribute curFieldTypeAttr = field.getFieldTypeAttribute();
                         if (field.getKind() == JavaKind.Object && curFieldTypeAttr != null) {
-                            alternatedFieldType = curFieldTypeAttr.getFieldType();
+                            alternatedFieldType = new TypeHints.TypeB(TypeHints.REFERENCE, curFieldTypeAttr.classTypeParamIndex);
                         }
                         // push to the stack:
                         if (state.stackTop + fieldSlotCount > maxStack) {

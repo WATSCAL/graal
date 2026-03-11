@@ -6,6 +6,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 
 public class TypeHints {
+    public static final byte[] EMPTY_TYPE_ARGS = new byte[0];
+
     public static final byte BYTE = 'B';
     public static final byte CHAR = 'C';
     public static final byte DOUBLE = 'D';

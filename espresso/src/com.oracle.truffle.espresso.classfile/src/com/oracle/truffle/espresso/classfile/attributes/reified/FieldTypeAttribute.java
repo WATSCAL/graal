@@ -9,21 +9,17 @@ import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 public class FieldTypeAttribute extends Attribute{
     public static final Symbol<Name> NAME = ParserNames.FieldType;
 
-    private final TypeHints.TypeB fieldType;
+    public final int classTypeParamIndex;
 
-    public FieldTypeAttribute(Symbol<Name> name, TypeHints.TypeB fieldType) {
+    public FieldTypeAttribute(Symbol<Name> name, int classTypeParamIndex) {
         super(name, null);
-        this.fieldType = fieldType;
-    }
-
-    public TypeHints.TypeB getFieldType() {
-        return fieldType;
+        this.classTypeParamIndex = classTypeParamIndex;
     }
 
     @Override
     public String toString() {
         return "FieldTypeAttribute{" +
-                        "fieldType=" + fieldType +
+                        "classTypeParamIndex=" + classTypeParamIndex +
                         '}';
     }
 }

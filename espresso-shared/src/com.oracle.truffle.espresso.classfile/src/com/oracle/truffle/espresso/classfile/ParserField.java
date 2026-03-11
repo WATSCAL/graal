@@ -73,9 +73,11 @@ public final class ParserField implements AttributedElement {
 
     public FieldTypeAttribute getFieldTypeAttribute(){
         Attribute[] attrs = getAttributes();
-        for (Attribute attr : attrs) {
-            if (attr instanceof FieldTypeAttribute att) {
-                return att;
+        if (attrs != null) {
+            for (Attribute attr : attrs) {
+                if (attr instanceof FieldTypeAttribute att) {
+                    return att;
+                }
             }
         }
         return null;

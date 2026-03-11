@@ -6,7 +6,7 @@ import com.oracle.truffle.espresso.classfile.descriptors.ParserSymbols.ParserNam
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 
 
-public class BCNewTypeArgsAttribute extends Attribute{
+public class BCNewTypeArgsAttribute extends Attribute {
     public static final Symbol<Name> NAME = ParserNames.BCNewTypeArgs;
 
     public record Entry(int bcOffset, int[] localSlotIndices) {}

@@ -30,8 +30,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.espresso.meta.EspressoError;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.staticobject.StaticShape;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.classfile.ParserConstantPool;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
@@ -55,8 +58,8 @@ public final class LinkedKlass {
     // Linked structural references.
     private final LinkedKlass superKlass;
 
-    final int curLevelTypeParamNum;
-    final int allTypeParamNum;
+    public final int curLevelTypeParamNum;
+    public final int allTypeParamNum;
 
     @CompilationFinal(dimensions = 1) //
     private final LinkedKlass[] interfaces;
@@ -76,12 +79,12 @@ public final class LinkedKlass {
     @CompilationFinal(dimensions = 2)
     private byte[][] specializedKeys;
     @CompilationFinal(dimensions = 1)
-    private StaticShape<StaticObjectFactory>[] specializedShapes;
+    private Object[] specializedShapes;
     @CompilationFinal(dimensions = 2)
     private LinkedField[][] specializedInstanceFields;
 
     private static final byte[][] EMPTY_BYTE_KEY = new byte[0][];
-    private static final StaticShape<StaticObjectFactory>[] EMPTY_SHAPE_ARRAY = new StaticShape<StaticObjectFactory>[0];
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     private static final LinkedField[][] EMPTY_LINKED_FIELD_ARRAY = new LinkedField[0][];
 
     final int fieldTableLength;
@@ -119,10 +122,10 @@ public final class LinkedKlass {
 
         ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
         this.curLevelTypeParamNum = typeParamList != null ? typeParamList.getTypeParams().length : 0;
-        this.allTypeParamNum = superKlass != null ? superKlass.getAllTypeParamNum() + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
+        this.allTypeParamNum = superKlass != null ? superKlass.allTypeParamNum + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
 
         this.specializedKeys = EMPTY_BYTE_KEY;
-        this.specializedShapes = EMPTY_SHAPE_ARRAY;
+        this.specializedShapes = EMPTY_OBJECT_ARRAY;
         this.specializedInstanceFields = EMPTY_LINKED_FIELD_ARRAY;
     }
 
@@ -268,8 +271,9 @@ public final class LinkedKlass {
         return curLen;
     }
 
+    @SuppressWarnings("unchecked")
     public StaticShape<StaticObjectFactory> getSpecializedShapeAt(int idx) {
-        return this.specializedShapes[idx];
+        return (StaticShape<StaticObjectFactory>) this.specializedShapes[idx];
     }
 
     public byte[] getSpecializedKeyAt(int idx) {
@@ -280,12 +284,13 @@ public final class LinkedKlass {
         return this.specializedInstanceFields[idx];
     }
 
+    @SuppressWarnings("unchecked")
     public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
         if (this.allTypeParamNum == 0) {
             return this.instanceShape;
         }
 
-        return this.specializedShapes[this.getSpecializationIndex(language, classTypeArgs)];
+        return (StaticShape<StaticObjectFactory>) this.specializedShapes[this.getSpecializationIndex(language, classTypeArgs)];
     }
 
 
