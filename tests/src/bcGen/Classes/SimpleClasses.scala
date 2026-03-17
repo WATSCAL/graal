@@ -2,7 +2,13 @@ package bcGen.Classes
 
 class SimpleClasses {
 
-    class Pair[A, B](var first: A, val second: B)
+    class Pair[A, B](var first: A, val second: B){
+      def getFirst: A = first
+      def setFirst(newFirst: A): Unit = {
+        first = newFirst
+      }
+      def id[T](x: T)[U]: T = x
+    }
 
     class IntDoublePair(var first0: Int, override val second: Double) extends Pair[Int, Double](first0, second)
 
@@ -17,10 +23,11 @@ object SimpleClassesTest {
   val simpleClasses = new SimpleClasses
 
   val pair1 = new simpleClasses.Pair[Int, String](42, "hello")
-  val pair2 = new simpleClasses.IntDoublePair(10, 3.14)
+  val pair2 = new simpleClasses.IntDoublePair(10, 3.14) //need locals for this?
   val pair3 = new simpleClasses.GenericPair[Double](3.14, 2.71)
   val pair4 = new simpleClasses.GenericPair[String]("foo", "bar")
   val pair5 = new simpleClasses.GenericPair2[Boolean](true, false)
+  val testid = pair1.id[Int](42)[String]
 
   @main def runSimpleClasses(): Unit = {
     println(s"Pair1: (${pair1.first}, ${pair1.second})")
