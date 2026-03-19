@@ -379,7 +379,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             for (int i = 0; i < methodParameterTypeHints.length; ++i) {
                 Symbol<Type> curSigType = SignatureSymbols.parameterType(methodSignature, i);
                 if (curSigType.byteAt(0) == 'L' && methodParameterTypeHints[i] != null) {
-                    this.methodParamTypes[i] = methodParameterTypeHints[i].resolve(reifiedMethodTypeParams);
+                    this.methodParamTypes[i] = methodParameterTypeHints[i].resolve(reifiedMethodTypeParams, reifiedClassTypeParams);
                 } else {
                     this.methodParamTypes[i] = 0;
                 }
@@ -401,7 +401,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (instOperandTypeHints != null) {
             for (int i = 0; i < instOperandTypeHints.length; ++i) {
                 if (instOperandTypeHints[i] != null) {
-                    this.invokeReturnTypes[i] = (instOperandTypeHints[i].invokeReturnType != null) ? instOperandTypeHints[i].invokeReturnType.resolve(reifiedMethodTypeParams) : 0;
+                    this.invokeReturnTypes[i] = (instOperandTypeHints[i].invokeReturnType != null) ? instOperandTypeHints[i].invokeReturnType.resolve(reifiedMethodTypeParams, reifiedClassTypeParams) : 0;
                     this.ignoreInvoke[i] = instOperandTypeHints[i].ignoreInvoke;
                     if (this.ignoreInvoke[i]) {
                         System.out.println("ignore " + i + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
@@ -413,9 +413,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         instOperandArrayElementTypes[i] = new byte[len];
                         for (int j = 0; j < len; ++j) {
                             if (instOperandTypeHints[i].operands[j] != null) {
-                                instOperandTypes[i][j] = instOperandTypeHints[i].operands[j].resolve(reifiedMethodTypeParams);
+                                instOperandTypes[i][j] = instOperandTypeHints[i].operands[j].resolve(reifiedMethodTypeParams, reifiedClassTypeParams);
                                 if (instOperandTypeHints[i].operands[j].isGenericArray()) {
-                                    instOperandArrayElementTypes[i][j] = instOperandTypeHints[i].operands[j].resolveArrayElement(reifiedMethodTypeParams);
+                                    instOperandArrayElementTypes[i][j] = instOperandTypeHints[i].operands[j].resolveArrayElement(reifiedMethodTypeParams, reifiedClassTypeParams);
                                 } else {
                                     instOperandArrayElementTypes[i][j] = 0;
                                 }
