@@ -66,25 +66,26 @@ public class TypeHints {
         public int getIndex() { return index; }
         public boolean isGenericArray() { return kind == ARR_CLASS_TYPE_PARAM || kind == ARR_METHOD_TYPE_PARAM; }
         
-        public byte resolve(byte[] methodTypeParams) {
-            if (this.kind == METHOD_TYPE_PARAM) {
-                return methodTypeParams[this.index];
-            } else if (this.kind == CLASS_TYPE_PARAM) {
-                return TypeHints.REFERENCE; // TODO: class type params
+        public byte resolve(byte[] methodTypeParams, byte[] classTypeParams) {
+            if (kind == METHOD_TYPE_PARAM) {
+                return methodTypeParams[index];
+            } else if (kind == CLASS_TYPE_PARAM) {
+                return classTypeParams[index];
             } else {
-                if (isPrimitive(this.kind)) {
-                    return this.kind;
+                if (isPrimitive(kind)) {
+                    return kind;
                 }
+                assert isGenericArray();
                 return TypeHints.REFERENCE;
             }
         }
         
-        public byte resolveArrayElement(byte[] methodTypeParams) {
+        public byte resolveArrayElement(byte[] methodTypeParams, byte[] classTypeParams) {
             assert kind == ARR_CLASS_TYPE_PARAM || kind == ARR_METHOD_TYPE_PARAM;
             if (kind == ARR_METHOD_TYPE_PARAM) {
                 return methodTypeParams[index];
             } else {
-                return TypeHints.REFERENCE; // TODO: class type params
+                return classTypeParams[index];
             }
         }
 
