@@ -64,6 +64,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     private final Method.MethodVersion methodVersion;
     private final FrameDescriptor frameDescriptor;
     private final boolean trivialBytecode;
+    private final boolean hasReceiver;
 
     @Children BytecodeNode[] specializations = null;
     @CompilerDirectives.CompilationFinal(dimensions=2) private byte[][] cacheKeys = null;
@@ -78,6 +79,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         this.methodVersion = bytecodeNode.getMethodVersion();
         this.frameDescriptor = bytecodeNode.getFrameDescriptor();
         this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
+        this.hasReceiver = methodVersion.getMethod().hasReceiver();
         this.methodTypeParamCount = 0;
         this.classTypeParamCount = 0;
     }
@@ -86,6 +88,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         super(methodVersion);
         this.methodVersion = methodVersion;
         this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
+        this.hasReceiver = methodVersion.getMethod().hasReceiver();
 
         CompilerAsserts.neverPartOfCompilation();
         MethodTypeParameterCountAttribute attr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
@@ -95,7 +98,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         if (this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
-            this.classTypeParamCount = methodVersion.getMethod().hasReceiver() ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
+            this.classTypeParamCount = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
             this.specializations = new BytecodeNode[0];
             this.cacheKeys = new byte[0][];
         } else {
@@ -148,8 +151,9 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             return EMPTY_BYTE_ARRAY;
         }
         byte[] key = new byte[methodTypeParamCount];
-        for (int i = 0; i < methodTypeParamCount; i++){
-            key[i] = (byte) args[args.length - methodTypeParamCount + i];
+        int start = this.hasReceiver ? 1 : 0;
+        for (int i = 0; i < methodTypeParamCount; i++) {
+            key[i] = (byte) args[start + i];
         }
         return key;
     }
