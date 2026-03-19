@@ -207,7 +207,8 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                         TypeHints.TypeB alternatedFieldType = null;
                         FieldTypeAttribute curFieldTypeAttr = field.getFieldTypeAttribute();
                         if (field.getKind() == JavaKind.Object && curFieldTypeAttr != null) {
-                            alternatedFieldType = new TypeHints.TypeB(TypeHints.REFERENCE, curFieldTypeAttr.classTypeParamIndex);
+                            alternatedFieldType = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, curFieldTypeAttr.classTypeParamIndex);
+                            nonTrivial = true;
                         }
                         // push to the stack:
                         if (state.stackTop + fieldSlotCount > maxStack) {
