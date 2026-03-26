@@ -104,9 +104,8 @@ final class LinkedKlassFieldLayout {
             LinkedField.IdMode idMode = LinkedKlassFieldLayout.getIdMode(parserKlass);
 
             for (ParserField parserField : parserKlass.getFields()) {
-                if (parserField.getFieldTypeAttribute() != null) {
-                    int index = parserField.getFieldTypeAttribute().classTypeParamIndex;
-                    byte alteredType = classTypeArgs[index];
+                if (parserField.getFieldTypeAttribute() != null && parserField.getFieldTypeAttribute().classTypeParamIndex >= 0) {
+                    byte alteredType = classTypeArgs[parserField.getFieldTypeAttribute().classTypeParamIndex];
                     assert !parserField.isStatic();
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, alteredType);
                 } else if (!parserField.isStatic()) {

@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.oracle.truffle.espresso.classfile.constantpool.InvokeDynamicConstant;
 import com.oracle.truffle.espresso.analysis.AnalysisProcessor;
 import com.oracle.truffle.espresso.analysis.BlockIterator;
 import com.oracle.truffle.espresso.analysis.BlockIteratorClosure;
 import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
@@ -37,6 +37,7 @@ import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEINT
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKESPECIAL;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKESTATIC;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEVIRTUAL;
+import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEDYNAMIC;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTFIELD;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTSTATIC;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SWAP;
@@ -97,12 +98,17 @@ public class TypePropagationClosure extends BlockIteratorClosure{
 
     @Override
     public BlockIterator.BlockProcessResult processBlock(LinkedBlock block, BytecodeStream bs, AnalysisProcessor processor) {
+        //System.out.println("block " + block.id() + " " + block);
         TypeAnalysisState inState = mergePredecessors(block);
+        //System.out.println("inState.stackTop = " + inState.stackTop);
         TypeAnalysisState outState = analyzeInBlock(block, bs, inState);
+        //System.out.println("outState.stackTop = " + outState.stackTop);
         TypeAnalysisState previousState = this.resAtBlockEnd[block.id()];
         if (outState.equals(previousState)){
+            //System.out.println("Skipping");
             return BlockIterator.BlockProcessResult.SKIP;
         } else {
+            //System.out.println("Overwriting");
             this.resAtBlockEnd[block.id()] = outState.copy();
             return BlockIterator.BlockProcessResult.DONE;
         }
@@ -141,7 +147,7 @@ public class TypePropagationClosure extends BlockIteratorClosure{
             if (predState != null) {
                 states.add(predState.copy());
             } else {
-                states.add(new TypeAnalysisState(maxLocals, maxStack));
+                states.add(null);
             }
         }
         return TypeAnalysisState.merge(states, maxLocals, maxStack);
@@ -205,9 +211,8 @@ public class TypePropagationClosure extends BlockIteratorClosure{
 
                     if (opcode == GETSTATIC || opcode == GETFIELD){
                         TypeHints.TypeB alternatedFieldType = null;
-                        FieldTypeAttribute curFieldTypeAttr = field.getFieldTypeAttribute();
-                        if (field.getKind() == JavaKind.Object && curFieldTypeAttr != null) {
-                            alternatedFieldType = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, curFieldTypeAttr.classTypeParamIndex);
+                        if (field.getKind() == JavaKind.Object && field.genericTypeParamIdx >= 0) {
+                            alternatedFieldType = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, field.genericTypeParamIdx);
                             nonTrivial = true;
                         }
                         // push to the stack:
@@ -234,114 +239,149 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                 case INVOKESPECIAL:
                 case INVOKESTATIC:
                 case INVOKEINTERFACE:
-                    cpi = bs.readCPI(bci);
-                    //following the logic in BytecodeNode getResolvedInvoke
-                    MethodRefConstant methodRefConstant =
-                        getConstantPool().resolvedMethodRefAt(
-                            getDeclaringKlass(), cpi);
-                    Method resolutionSeed = (Method) ((Resolvable.ResolvedConstant) methodRefConstant).value();
-                    Klass symbolicRef = Resolution.getResolvedHolderKlass(
-                        getConstantPool().methodAt(cpi), 
-                        getConstantPool(),
-                        getDeclaringKlass()
-                    );
-                    CallSiteType callSiteType = SiteTypes.callSiteFromOpCode(opcode);
-                    ResolvedCall<Klass, Method, Field> resolvedCall = 
-                        EspressoLinkResolver.resolveCallSiteOrThrow(ctx, getDeclaringKlass(), resolutionSeed, callSiteType, symbolicRef);
-                    Method resolvedMethod = resolvedCall.getResolvedMethod();
-
-                    if (resolvedMethod.getNameAsString().equals("array_apply") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")) {
-                        TypeHints.TypeB xs_type = state.stack[state.stackTop - 2];
-                        byte xs_type_kind = xs_type.getKind();
-                        assert xs_type_kind == TypeHints.ARR_CLASS_TYPE_PARAM
-                            || xs_type_kind == TypeHints.ARR_METHOD_TYPE_PARAM;
-                        if (xs_type_kind == TypeHints.ARR_CLASS_TYPE_PARAM) {
-                            state.stack[state.stackTop - 3] = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, xs_type.getIndex());
-                        } else { // ARR_METHOD_TYPE_PARAM
-                            state.stack[state.stackTop - 3] = new TypeHints.TypeB(TypeHints.METHOD_TYPE_PARAM, xs_type.getIndex());
+                    {
+                        /*
+                        if ("bcGen/Classes/SimpleClassesTest$".equals(methodVersion.getMethod().getDeclaringKlass().getNameAsString())
+                            && "runSimpleClasses".equals(methodVersion.getMethod().getNameAsString())) {
+                            System.out.println("Before bci=" + bci + " stackTop=" + state.stackTop);
                         }
-                        TypeHints.TypeB[] argsHint = new TypeHints.TypeB[2];
-                        assert state.stack[state.stackTop - 1] == null;
-                        argsHint[0] = xs_type;
-                        this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
-                        state.stackTop -= 2;
-                        break;
-                    }
-                    if (resolvedMethod.getNameAsString().equals("array_update") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")) {
-                        TypeHints.TypeB[] argsHint = new TypeHints.TypeB[3];
-                        argsHint[0] = state.stack[state.stackTop - 3];
-                        assert state.stack[state.stackTop - 2] == null;
-                        argsHint[2] = state.stack[state.stackTop - 1];
-                        this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
-                        state.stackTop -= 4;
-                        break;
-                    }
-                    
-                    Symbol<Type>[] signature = resolvedMethod.getParsedSignature();
-                    int paramCnt = SignatureSymbols.parameterCount(signature);
+                        */
+                        cpi = bs.readCPI(bci);
+                        //following the logic in BytecodeNode getResolvedInvoke
+                        MethodRefConstant methodRefConstant =
+                            getConstantPool().resolvedMethodRefAt(
+                                getDeclaringKlass(), cpi);
+                        Method resolutionSeed = (Method) ((Resolvable.ResolvedConstant) methodRefConstant).value();
+                        Klass symbolicRef = Resolution.getResolvedHolderKlass(
+                            getConstantPool().methodAt(cpi), 
+                            getConstantPool(),
+                            getDeclaringKlass()
+                        );
+                        CallSiteType callSiteType = SiteTypes.callSiteFromOpCode(opcode);
+                        ResolvedCall<Klass, Method, Field> resolvedCall = 
+                            EspressoLinkResolver.resolveCallSiteOrThrow(ctx, getDeclaringKlass(), resolutionSeed, callSiteType, symbolicRef);
+                        Method resolvedMethod = resolvedCall.getResolvedMethod();
 
-
-                    Symbol<Type> returnTypeSig = SignatureSymbols.returnType(signature);
-                    if (ignoredCalls.contains(bci)) {
-                        assert resolvedMethod.isStatic() && paramCnt == 1;
-                        Symbol<Type> inputTypeSig = SignatureSymbols.parameterType(signature, 0);
-                        int stackTopAdjustment = 0;
-                        TypeHints.TypeB[] operands = new TypeHints.TypeB[1];
-                        if (TypeHints.isPrimitive(inputTypeSig.byteAt(0))) { // boxing
-                            operands[0] = new TypeHints.TypeB(inputTypeSig.byteAt(0), -1);
-                            if (inputTypeSig.byteAt(0) == 'J' || inputTypeSig.byteAt(0) == 'D') {
-                                stackTopAdjustment = -1;
-                                state.stackTop -= 1;
+                        if (resolvedMethod.getNameAsString().equals("array_apply") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")) {
+                            TypeHints.TypeB xs_type = state.stack[state.stackTop - 2];
+                            byte xs_type_kind = xs_type.getKind();
+                            assert xs_type_kind == TypeHints.ARR_CLASS_TYPE_PARAM
+                                || xs_type_kind == TypeHints.ARR_METHOD_TYPE_PARAM;
+                            if (xs_type_kind == TypeHints.ARR_CLASS_TYPE_PARAM) {
+                                state.stack[state.stackTop - 3] = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, xs_type.getIndex());
+                            } else { // ARR_METHOD_TYPE_PARAM
+                                state.stack[state.stackTop - 3] = new TypeHints.TypeB(TypeHints.METHOD_TYPE_PARAM, xs_type.getIndex());
                             }
-                            state.stack[state.stackTop - 1] = new TypeHints.TypeB(inputTypeSig.byteAt(0), -1);
-                        } else { // unboxing
-                            assert TypeHints.isPrimitive(returnTypeSig.byteAt(0));
-                            assert state.stack[state.stackTop - 1].getKind() == returnTypeSig.byteAt(0);
-                            operands[0] = new TypeHints.TypeB(returnTypeSig.byteAt(0), -1);
-                            state.stack[state.stackTop - 1] = null; // Its type in bytecode is no longer a reference
-                            if (returnTypeSig.byteAt(0) == 'J' || returnTypeSig.byteAt(0) == 'D') {
-                                stackTopAdjustment = 1;
-                                state.stackTop += 1;
-                            }
-                        }
-                        nonTrivial = true;
-                        this.resAtBCI[bci] = new TypeAnalysisResult(operands, stackTopAdjustment);
-                        break;
-                    }
-
-                    TypeHints.TypeB[] argsHint = new TypeHints.TypeB[paramCnt];
-                    for (int i = paramCnt - 1; i >= 0; i--){
-                        Symbol<Type> cur = SignatureSymbols.parameterType(signature, i);
-                        if (cur.byteAt(0) == 'J' || cur.byteAt(0) == 'D') {
-                            assert state.stack[state.stackTop - 1] == null && state.stack[state.stackTop - 2] == null;
-                            argsHint[i] = null;
+                            TypeHints.TypeB[] argsHint = new TypeHints.TypeB[2];
+                            assert state.stack[state.stackTop - 1] == null;
+                            argsHint[0] = xs_type;
+                            this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
                             state.stackTop -= 2;
-                        } else {
-                            argsHint[i] = state.stack[--state.stackTop];
+                            break;
                         }
-                    }
-                    if (!resolvedMethod.isStatic()) {
-                        assert state.stack[state.stackTop - 1] == null; // We should ban calling methods of Any (e.g. hashCode) on a value typed T
-                        --state.stackTop;
-                    }
+                        if (resolvedMethod.getNameAsString().equals("array_update") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")) {
+                            TypeHints.TypeB[] argsHint = new TypeHints.TypeB[3];
+                            argsHint[0] = state.stack[state.stackTop - 3];
+                            assert state.stack[state.stackTop - 2] == null;
+                            argsHint[2] = state.stack[state.stackTop - 1];
+                            this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
+                            state.stackTop -= 4;
+                            break;
+                        }
+                        
+                        Symbol<Type>[] signature = resolvedMethod.getParsedSignature();
+                        int paramCnt = SignatureSymbols.parameterCount(signature);
 
-                    int returnValueSlotCount = resolvedMethod.getReturnKind().getSlotCount();
 
-                    TypeHints.TypeB returnType = null;
-                    if (returnTypeSig.byteAt(0) == 'L' && invokeReturnTypeAttributes != null){
-                        for (InvokeReturnTypeAttribute.Entry invokeReturnTypeEntry : invokeReturnTypeAttributes) {
-                            if (invokeReturnTypeEntry.bytecodeOffset() == bci) {
-                                returnType = invokeReturnTypeEntry.returnType();
-                                break;
+                        Symbol<Type> returnTypeSig = SignatureSymbols.returnType(signature);
+                        if (ignoredCalls.contains(bci)) {
+                            assert resolvedMethod.isStatic() && paramCnt == 1;
+                            Symbol<Type> inputTypeSig = SignatureSymbols.parameterType(signature, 0);
+                            int stackTopAdjustment = 0;
+                            TypeHints.TypeB[] operands = new TypeHints.TypeB[1];
+                            if (TypeHints.isPrimitive(inputTypeSig.byteAt(0))) { // boxing
+                                operands[0] = new TypeHints.TypeB(inputTypeSig.byteAt(0), -1);
+                                if (inputTypeSig.byteAt(0) == 'J' || inputTypeSig.byteAt(0) == 'D') {
+                                    stackTopAdjustment = -1;
+                                    state.stackTop -= 1;
+                                }
+                                state.stack[state.stackTop - 1] = new TypeHints.TypeB(inputTypeSig.byteAt(0), -1);
+                            } else { // unboxing
+                                assert TypeHints.isPrimitive(returnTypeSig.byteAt(0));
+                                assert state.stack[state.stackTop - 1].getKind() == returnTypeSig.byteAt(0);
+                                operands[0] = new TypeHints.TypeB(returnTypeSig.byteAt(0), -1);
+                                state.stack[state.stackTop - 1] = null; // Its type in bytecode is no longer a reference
+                                if (returnTypeSig.byteAt(0) == 'J' || returnTypeSig.byteAt(0) == 'D') {
+                                    stackTopAdjustment = 1;
+                                    state.stackTop += 1;
+                                }
+                            }
+                            nonTrivial = true;
+                            this.resAtBCI[bci] = new TypeAnalysisResult(operands, stackTopAdjustment);
+                            break;
+                        }
+
+                        TypeHints.TypeB[] argsHint = new TypeHints.TypeB[paramCnt];
+                        for (int i = paramCnt - 1; i >= 0; i--){
+                            Symbol<Type> cur = SignatureSymbols.parameterType(signature, i);
+                            if (cur.byteAt(0) == 'J' || cur.byteAt(0) == 'D') {
+                                assert state.stack[state.stackTop - 1] == null && state.stack[state.stackTop - 2] == null;
+                                argsHint[i] = null;
+                                state.stackTop -= 2;
+                            } else {
+                                argsHint[i] = state.stack[--state.stackTop];
                             }
                         }
+                        if (!resolvedMethod.isStatic()) {
+                            assert state.stack[state.stackTop - 1] == null; // We should ban calling methods of Any (e.g. hashCode) on a value typed T
+                            --state.stackTop;
+                        }
+
+                        int returnValueSlotCount = resolvedMethod.getReturnKind().getSlotCount();
+
+                        TypeHints.TypeB returnType = null;
+                        if (returnTypeSig.byteAt(0) == 'L' && invokeReturnTypeAttributes != null){
+                            for (InvokeReturnTypeAttribute.Entry invokeReturnTypeEntry : invokeReturnTypeAttributes) {
+                                if (invokeReturnTypeEntry.bytecodeOffset() == bci) {
+                                    returnType = invokeReturnTypeEntry.returnType();
+                                    break;
+                                }
+                            }
+                        }
+                        this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, returnType, false);
+                        if (returnType != null) {
+                            nonTrivial = true;
+                        }
+                        for (int i = 0; i < returnValueSlotCount; ++i) {
+                            state.stack[state.stackTop++] = returnType;
+                        }
+                        /*
+                        if ("bcGen/Classes/SimpleClassesTest$".equals(methodVersion.getMethod().getDeclaringKlass().getNameAsString())
+                            && "runSimpleClasses".equals(methodVersion.getMethod().getNameAsString())) {
+                            System.out.println("bci=" + bci + " stackTop=" + state.stackTop);
+                        }
+                        */
                     }
-                    this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, returnType, false);
-                    if (returnType != null) {
-                        nonTrivial = true;
-                    }
-                    for (int i = 0; i < returnValueSlotCount; ++i) {
-                        state.stack[state.stackTop++] = returnType;
+                    break;
+                case INVOKEDYNAMIC:
+                    {
+                        int cpIdx = bs.readCPI(bci);
+                        InvokeDynamicConstant.Indexes info = (InvokeDynamicConstant.Indexes) methodVersion.getPool().at(cpIdx);
+                        Symbol<Type>[] signature = methodVersion.getMethod().getSignatures().parsed(info.getSignature(methodVersion.getPool()));
+                        for (int i = SignatureSymbols.parameterCount(signature) - 1; i >= 0; i--){
+                            Symbol<Type> cur = SignatureSymbols.parameterType(signature, i);
+                            if (cur.byteAt(0) == 'J' || cur.byteAt(0) == 'D') {
+                                state.stackTop -= 2;
+                            } else {
+                                --state.stackTop;
+                            }
+                        }
+                        Symbol<Type> returnTypeSig = SignatureSymbols.returnType(signature);
+                        if (returnTypeSig.byteAt(0) == 'J' || returnTypeSig.byteAt(0) == 'D') {
+                            state.stackTop += 2;
+                        } else if (returnTypeSig.byteAt(0) != 'V') {
+                            state.stackTop++;
+                        }
                     }
                     break;
                 case DUP:
