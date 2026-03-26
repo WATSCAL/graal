@@ -269,6 +269,7 @@ public final class LinkedKlass {
         this.specializedInstanceFields = Arrays.copyOf(this.specializedInstanceFields, curLen + 1);
         this.specializedInstanceFields[curLen] = newLayout.instanceFields;
 
+        //System.out.println(parserKlass.getName().toString() + " Inserted a new specialization at " + curLen);
         return curLen;
     }
 
@@ -278,6 +279,7 @@ public final class LinkedKlass {
     }
 
     public byte[] getSpecializedKeyAt(int idx) {
+        //System.out.println(parserKlass.getName().toString() + " getSpecializedKeyAt " + idx);
         return this.specializedKeys[idx];
     }
 
@@ -291,9 +293,10 @@ public final class LinkedKlass {
             return this.instanceShape;
         }
 
-        return (StaticShape<StaticObjectFactory>) this.specializedShapes[this.getSpecializationIndex(language, classTypeArgs)];
+        //CompilerDirectives.transferToInterpreterAndInvalidate();
+        int idx = this.getSpecializationIndex(language, classTypeArgs);
+        return (StaticShape<StaticObjectFactory>) this.specializedShapes[idx];
     }
-
 
 
     /*

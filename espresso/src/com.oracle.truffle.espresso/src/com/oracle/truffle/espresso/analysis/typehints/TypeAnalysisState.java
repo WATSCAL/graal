@@ -36,13 +36,12 @@ public class TypeAnalysisState {
     }
 
     public static TypeAnalysisState merge(List<TypeAnalysisState> states, int maxLocals, int maxStack){
-        TypeAnalysisState ret = states.get(0).copy();
         for (TypeAnalysisState v : states) {
-            assert v.stackTop == ret.stackTop : "stackTop unmatch when merging control flows";
-            assert Arrays.equals(ret.locals, v.locals) : "locals unmatch when merging control flows";
-            assert Arrays.equals(ret.stack, v.stack) : "stack unmatch when merging control flows";
+            if (v != null) {
+                return v;
+            }
         }
-        return ret;
+        return null;
     }
 
     @Override

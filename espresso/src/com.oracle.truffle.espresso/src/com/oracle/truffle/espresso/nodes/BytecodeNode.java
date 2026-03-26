@@ -403,9 +403,11 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 if (instOperandTypeHints[i] != null) {
                     this.invokeReturnTypes[i] = (instOperandTypeHints[i].invokeReturnType != null) ? instOperandTypeHints[i].invokeReturnType.resolve(reifiedMethodTypeParams, reifiedClassTypeParams) : 0;
                     this.ignoreInvoke[i] = instOperandTypeHints[i].ignoreInvoke;
+                    /*
                     if (this.ignoreInvoke[i]) {
                         System.out.println("ignore " + i + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
                     }
+                    */
                     this.stackTopAdjustment[i] = instOperandTypeHints[i].stackTopAdjustment;
                     if (instOperandTypeHints[i].operands != null) {
                         int len = instOperandTypeHints[i].operands.length;
@@ -434,6 +436,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (allocTypeArgsAttr != null) {
             for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
                 this.allocTypeArgSlotIndices[entry.bcOffset()] = entry.localSlotIndices();
+                //System.out.println(method.getNameAsString() + " " + entry.bcOffset() + ": ");
+                //for (int v : entry.localSlotIndices()) System.out.print(v + " ");
+                //System.out.print('\n');
             }
         }
 
@@ -1810,6 +1815,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
         if (this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length > 0) {
+            //System.out.println("Creating specialized object");
             int len = this.allocTypeArgSlotIndices[curBCI].length;
             byte[] allocTypeArgs = new byte[len];
             for (int i = 0; i < len; ++i) {

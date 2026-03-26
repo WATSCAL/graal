@@ -1473,7 +1473,7 @@ public final class ClassfileParser {
         assert ParserNames.FieldType.equals(name);
         byte kind = (byte) stream.readU1();
         int index = stream.readU2();
-        return kind == TypeHints.CLASS_TYPE_PARAM ? new FieldTypeAttribute(name, index) : null;
+        return kind == TypeHints.CLASS_TYPE_PARAM ? new FieldTypeAttribute(name, index) : new FieldTypeAttribute(name, -1);
     }
 
     private LineNumberTableAttribute parseLineNumberTable(Symbol<Name> name) {
