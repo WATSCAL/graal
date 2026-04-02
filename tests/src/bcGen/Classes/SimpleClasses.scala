@@ -124,24 +124,40 @@ object SimpleClassesTest {
   val testid = pair1.id[Int](42)[String]
 
   @main def runSimpleClasses(): Unit = {
-    println(s"Pair1: (${pair1.first}, ${pair1.second})")
-
-    println(s"Pair2: (${pair2.first0}, ${pair2.second})")
-
-    println(s"Pair3: (${pair3.first0}, ${pair3.second})")
-
-    println(s"Pair4: (${pair4.first0}, ${pair4.second})")
-
-    println(s"Pair5: (${pair5.first1}, ${pair5.second})")
+    val a = pair1.first
+    val b = pair1.second
+    println(s"Pair1: (${a}, ${b})")
+    val c = pair2.first0
+    val d = pair2.second
+    println(s"Pair2: (${c}, ${d})")
+    val e = pair3.first0
+    val f = pair3.second
+    println(s"Pair3: (${e}, ${f})")
+    val g = pair4.first0
+    val h = pair4.second
+    println(s"Pair4: (${g}, ${h})")
+    val i = pair5.first1
+    val j = pair5.second
+    println(s"Pair5: (${i}, ${j})")
     pair1.first = pair2.first0 + 10
-    println(s"Updated Pair1: (${pair1.first}, ${pair1.second})")
+    val k = pair1.first
+    val l = pair1.second
+    println(s"Updated Pair1: (${k}, ${l})")
     pair2.first0 = pair1.first
-    println(s"Updated Pair2: (${pair2.first0}, ${pair2.second})")
+    val m = pair2.first0
+    val n = pair2.second
+    println(s"Updated Pair2: (${m}, ${n})")
     pair3.first0 = pair2.second
-    println(s"Updated Pair3: (${pair3.first0}, ${pair3.second})")
+    val o = pair3.first0
+    val p = pair3.second
+    println(s"Updated Pair3: (${o}, ${p})")
     pair4.first0 = pair5.second.toString()
-    println(s"Updated Pair4: (${pair4.first0}, ${pair4.second})")
+    val q = pair4.first0
+    val r = pair4.second
+    println(s"Updated Pair4: (${q}, ${r})")
     pair5.first1 = pair4.second == "bar"
-    println(s"Updated Pair5: (${pair5.first1}, ${pair5.second})")
+    val s = pair5.first1
+    val t = pair5.second
+    println(s"Updated Pair5: (${s}, ${t})")
   }
 }
