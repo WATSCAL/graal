@@ -95,7 +95,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         this.methodTypeParamCount = attr != null ? attr.getCount() : 0;
 
         this.analysis = TypeHintAnalysis.analyze(methodVersion);
-        if (this.analysis != null) {
+        if ((this.hasReceiver && methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum > 0) || this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
             this.classTypeParamCount = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
@@ -159,7 +159,11 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     }
 
     private byte[] collectClassTypeParams(StaticObject receiver) {
-        return ((ObjectKlass) receiver.getKlass()).getLinkedKlass().getSpecializedKeyAt(receiver.specializationIndex);
+        byte[] ret = ((ObjectKlass) receiver.getKlass()).getLinkedKlass().getSpecializedKeyAt(receiver.specializationIndex);
+        // System.out.println("collectClassTypeParams: " + receiver.specializationIndex + " at " + ((ObjectKlass) receiver.getKlass()).getNameAsString());
+        // for (byte v : ret) System.out.print(v);
+        // System.out.print('\n');
+        return ret;
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)

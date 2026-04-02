@@ -1814,16 +1814,18 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
-        if (this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length > 0) {
+        ObjectKlass objKlass = (ObjectKlass) klass;
+        if (objKlass.getLinkedKlass().allTypeParamNum > 0) {
+            assert this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length == objKlass.getLinkedKlass().allTypeParamNum;
             //System.out.println("Creating specialized object");
             int len = this.allocTypeArgSlotIndices[curBCI].length;
             byte[] allocTypeArgs = new byte[len];
             for (int i = 0; i < len; ++i) {
                 allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
             }
-            return getAllocator().createNewSpecialized((ObjectKlass) klass, allocTypeArgs);
+            return getAllocator().createNewSpecialized(objKlass, allocTypeArgs);
         } else {
-            return getAllocator().createNew((ObjectKlass) klass);
+            return getAllocator().createNew(objKlass);
         }
     }
 
@@ -3004,6 +3006,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (alternatedType == 'L' && typeParamIdx >= 0) {
             alternatedType = this.reifiedClassTypeParams[typeParamIdx];
         }
+        if (typeHeader == 'D' || typeHeader == 'J') {
+            resultAt = resultAt + 1;
+        }
         CompilerAsserts.partialEvaluationConstant(alternatedType);
         
         switch (alternatedType) {
@@ -3012,9 +3017,9 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             case 'C' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getCharVolatile(receiver) : specializedLinkedField.getChar(receiver));      break;
             case 'S' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getShortVolatile(receiver) : specializedLinkedField.getShort(receiver));     break;
             case 'I' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getIntVolatile(receiver) : specializedLinkedField.getInt(receiver));       break;
-            case 'D' : putDouble(frame, resultAt, isVolatile ? specializedLinkedField.getDoubleVolatile(receiver) : specializedLinkedField.getDouble(receiver)); break;
+            case 'D' : frame.setDoubleStatic(resultAt, isVolatile ? specializedLinkedField.getDoubleVolatile(receiver) : specializedLinkedField.getDouble(receiver)); break;
             case 'F' : putFloat(frame, resultAt, isVolatile ? specializedLinkedField.getFloatVolatile(receiver) : specializedLinkedField.getFloat(receiver));   break;
-            case 'J' : putLong(frame, resultAt, isVolatile ? specializedLinkedField.getLongVolatile(receiver) : specializedLinkedField.getLong(receiver));     break;
+            case 'J' : frame.setLongStatic(resultAt, isVolatile ? specializedLinkedField.getLongVolatile(receiver) : specializedLinkedField.getLong(receiver));     break;
             case '[' : // fall through
             case 'L' : {
                 StaticObject value = (StaticObject) (isVolatile ? specializedLinkedField.getObjectVolatile(receiver) : specializedLinkedField.getObject(receiver));

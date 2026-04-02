@@ -238,6 +238,10 @@ public final class LinkedKlass {
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
     public int getSpecializationIndexReadOnly(byte[] classTypeArgs) {
+        // System.out.println("getSpecializationIndexReadOnly " + parserKlass.getName().toString());
+        // System.out.println(classTypeArgs.length);
+        // for (byte v : classTypeArgs) System.out.print(v);
+        // System.out.print('\n');
         for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
             if (matchSpecializationKey(idx, classTypeArgs)) {
                 return idx;
