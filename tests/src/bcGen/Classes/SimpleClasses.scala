@@ -151,7 +151,8 @@ object SimpleClassesTest {
     val o = pair3.first0
     val p = pair3.second
     println(s"Updated Pair3: (${o}, ${p})")
-    pair4.first0 = pair5.second.toString()
+    val a1 = pair5.second
+    pair4.first0 = a1.toString()
     val q = pair4.first0
     val r = pair4.second
     println(s"Updated Pair4: (${q}, ${r})")
