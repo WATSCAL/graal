@@ -336,6 +336,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     @CompilationFinal(dimensions = 1)
     private final byte[] reifiedClassTypeParams;
+    @CompilationFinal(dimensions = 1)
+    private final byte[] reifiedMethodTypeParams;
 
     @CompilationFinal(dimensions = 1)
     private final byte[] invokeReturnTypes;
@@ -368,7 +370,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.bs = new BytecodeStream(code);
         this.stackOverflowErrorInfo = method.getSOEHandlerInfo();
 
-        this.reifiedClassTypeParams = reifiedClassTypeParams;
+        this.reifiedClassTypeParams = reifiedClassTypeParams != null ? reifiedClassTypeParams : TypeHints.EMPTY_TYPE_ARGS;
+        this.reifiedMethodTypeParams = reifiedMethodTypeParams != null ? reifiedMethodTypeParams : TypeHints.EMPTY_TYPE_ARGS;
 
         Symbol<Type>[] methodSignature = method.getParsedSignature();
         int argCount = SignatureSymbols.parameterCount(methodSignature);
@@ -492,49 +495,53 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
         CompilerAsserts.partialEvaluationConstant(argCount);
         for (int i = 0; i < argCount; ++i) {
-            Symbol<Type> argType = SignatureSymbols.parameterType(methodSignature, i);
-            // @formatter:off
-            switch (argType.byteAt(0)) {
-                case 'Z' : setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
-                case 'B' : setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot]));            break;
-                case 'S' : setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot]));           break;
-                case 'C' : setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot]));            break;
-                case 'I' : setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]);               break;
-                case 'F' : setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]);           break;
-                case 'J' : setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]);     ++curSlot; break;
-                case 'D' : setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); ++curSlot; break;
-                case '[' : // fall through
-                case 'L' : {
-                        CompilerAsserts.partialEvaluationConstant(methodParamTypes[i]);
-                        // System.out.println(argCount + " fetch " + methodParamTypes[i] + " at " + i);
-                        switch (this.methodParamTypes[i]){
-                            case TypeHints.BYTE:
-                                setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot])); break;
-                            case TypeHints.CHAR:
-                                setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot])); break;
-                            case TypeHints.DOUBLE:
-                                setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); break;
-                            case TypeHints.FLOAT:
-                                setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]); break;
-                            case TypeHints.INT:
-                                setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]); break;
-                            case TypeHints.LONG:
-                                setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]); break;
-                            case TypeHints.SHORT:
-                                setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot])); break;
-                            case TypeHints.BOOLEAN:
-                                setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
-                            default:
-                                StaticObject argument = (StaticObject) arguments[i + receiverSlot];
-                                setLocalObject(frame, curSlot, argument);
-                                checkNoForeignObjectAssumption(argument);
-                                break;
-                        }
-                        break;
+            if (i < this.reifiedMethodTypeParams.length) {
+                setLocalInt(frame, curSlot, this.reifiedMethodTypeParams[i]);
+            } else {
+                Symbol<Type> argType = SignatureSymbols.parameterType(methodSignature, i);
+                // @formatter:off
+                switch (argType.byteAt(0)) {
+                    case 'Z' : setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
+                    case 'B' : setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot]));            break;
+                    case 'S' : setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot]));           break;
+                    case 'C' : setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot]));            break;
+                    case 'I' : setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]);               break;
+                    case 'F' : setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]);           break;
+                    case 'J' : setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]);     ++curSlot; break;
+                    case 'D' : setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); ++curSlot; break;
+                    case '[' : // fall through
+                    case 'L' : {
+                            CompilerAsserts.partialEvaluationConstant(methodParamTypes[i]);
+                            // System.out.println(argCount + " fetch " + methodParamTypes[i] + " at " + i);
+                            switch (this.methodParamTypes[i]){
+                                case TypeHints.BYTE:
+                                    setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot])); break;
+                                case TypeHints.CHAR:
+                                    setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot])); break;
+                                case TypeHints.DOUBLE:
+                                    setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); break;
+                                case TypeHints.FLOAT:
+                                    setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]); break;
+                                case TypeHints.INT:
+                                    setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]); break;
+                                case TypeHints.LONG:
+                                    setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]); break;
+                                case TypeHints.SHORT:
+                                    setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot])); break;
+                                case TypeHints.BOOLEAN:
+                                    setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
+                                default:
+                                    StaticObject argument = (StaticObject) arguments[i + receiverSlot];
+                                    setLocalObject(frame, curSlot, argument);
+                                    checkNoForeignObjectAssumption(argument);
+                                    break;
+                            }
+                            break;
+                    }
+                    default :
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        throw EspressoError.shouldNotReachHere();
                 }
-                default :
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    throw EspressoError.shouldNotReachHere();
             }
             // @formatter:on
             ++curSlot;

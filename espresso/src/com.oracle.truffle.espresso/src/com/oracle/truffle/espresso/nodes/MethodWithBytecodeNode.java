@@ -159,11 +159,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     }
 
     private byte[] collectClassTypeParams(StaticObject receiver) {
-        byte[] ret = ((ObjectKlass) receiver.getKlass()).getLinkedKlass().getSpecializedKeyAt(receiver.specializationIndex);
-        // System.out.println("collectClassTypeParams: " + receiver.specializationIndex + " at " + ((ObjectKlass) receiver.getKlass()).getNameAsString());
-        // for (byte v : ret) System.out.print(v);
-        // System.out.print('\n');
-        return ret;
+        return receiver.classTypeParams;
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
