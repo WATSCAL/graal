@@ -69,6 +69,8 @@ visualizer/IdealGraphVisualizer/*/target/
 !tests/classfiles/hint/bcGen/Arrays/*.class
 !tests/classfiles/plain/bcGen/Arrays/*.class
 !tests/classfiles/hint/bcGen/Performance/*.class
+!tests/lib/
+!tests/lib/scala/runtime/*.class
 .vscode/
 .metals/
 .scala-build/
