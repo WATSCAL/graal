@@ -288,6 +288,13 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                             state.stackTop -= 4;
                             break;
                         }
+                        if (resolvedMethod.getNameAsString().equals("reifiedAsInstanceOf") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime")) {
+                            TypeHints.TypeB[] argsHint = new TypeHints.TypeB[1];
+                            argsHint[0] = state.stack[state.stackTop - 1];
+                            state.stack[state.stackTop - 1] = null;
+                            this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
+                            break;
+                        }
                         
                         Symbol<Type>[] signature = resolvedMethod.getParsedSignature();
                         int paramCnt = SignatureSymbols.parameterCount(signature);
