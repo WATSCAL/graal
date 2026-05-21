@@ -3,8 +3,8 @@ package bcGen.Performance
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-final class PriorityQueue[A](using ordering: Ordering[A], classTag: ClassTag[A]):
-  private val heap = Vector.empty[A]
+final class PriorityQueue[A](using ordering: Ordering[A]):
+  private val heap = bcGen.Performance.Vector.empty[A]
 
   def isEmpty: Boolean = heap.isEmpty
 

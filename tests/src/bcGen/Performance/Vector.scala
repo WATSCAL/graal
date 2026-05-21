@@ -2,7 +2,7 @@ package bcGen.Performance
 
 import scala.reflect.ClassTag
 
-final class Vector[A] private (initialCapacity: Int)(using classTag: ClassTag[A]):
+final class Vector[A] private (initialCapacity: Int):
   private var elements = new Array[A](math.max(1, initialCapacity))
   private var currentSize = 0
 
@@ -43,5 +43,5 @@ final class Vector[A] private (initialCapacity: Int)(using classTag: ClassTag[A]
       elements = resized
 
 object Vector:
-  def empty[A](using ClassTag[A]): Vector[A] =
+  def empty[A]: Vector[A] =
     new Vector[A](1)
