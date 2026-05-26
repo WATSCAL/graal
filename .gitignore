@@ -70,7 +70,7 @@ visualizer/C1Visualizer/*/target/
 !tests/classfiles/hint/bcGen/Performance/*.class
 !tests/classfiles/lib/
 !tests/classfiles/lib/scala/runtime/*.class
-!tests/classfiles/lib/scala-library-reified.jar
+!tests/classfiles/lib/*.jar
 .vscode/
 .metals/
 .scala-build/
