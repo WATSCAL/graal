@@ -45,6 +45,7 @@ import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.FloatConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.ImmutablePoolConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.IntegerConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.InterfaceMethodRefConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.InvokeDynamicConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.LongConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.MemberRefConstant;
@@ -332,6 +333,14 @@ public abstract class ConstantPool {
             return (FieldRefConstant.Indexes) at(index);
         } catch (ClassCastException e) {
             throw unexpectedEntry(index, null, FIELD_REF);
+        }
+    }
+
+    public final InterfaceMethodRefConstant.Indexes interfaceMethodAt(int index) {
+        try {
+            return (InterfaceMethodRefConstant.Indexes) at(index);
+        } catch (ClassCastException e) {
+            throw unexpectedEntry(index, null, INTERFACE_METHOD_REF);
         }
     }
 

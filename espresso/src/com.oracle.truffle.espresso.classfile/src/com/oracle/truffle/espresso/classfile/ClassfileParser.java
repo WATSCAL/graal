@@ -88,6 +88,7 @@ import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribu
 import com.oracle.truffle.espresso.classfile.attributes.reified.InvokeReturnTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
 import com.oracle.truffle.espresso.classfile.constantpool.ClassMethodRefConstant;
@@ -1211,6 +1212,7 @@ public final class ClassfileParser {
         RecordAttribute record = null;
         //newly added class attribute
         ClassTypeParamListAttribute classTypeParamList = null;
+        TraitTypeParamListAttribute traitTypeParamList = null;
 
         CommonAttributeParser commonAttributeParser = new CommonAttributeParser(InfoType.Class);
 
@@ -1243,6 +1245,11 @@ public final class ClassfileParser {
                     throw classFormatError("Duplicate ClassTypeParamList attribute");
                 }
                 classAttributes[i] = classTypeParamList = parseClassTypeParamList(attributeName);
+            } else if (attributeName.equals(ParserNames.TraitTypeParamList)) {
+                if (traitTypeParamList != null) {
+                    throw classFormatError("Duplicate TraitTypeParamList attribute");
+                }
+                classAttributes[i] = traitTypeParamList = parseTraitTypeParamList(attributeName);
             } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (majorVersion >= JAVA_7_VERSION && attributeName.equals(ParserNames.BootstrapMethods)) {
                     if (bootstrapMethods != null) {
@@ -1354,6 +1361,27 @@ public final class ClassfileParser {
             fieldRefs[i] = pool.fieldAt(stream.readU2());
         }
         return new ClassTypeParamListAttribute(name, fieldRefs);
+    }
+
+    /*
+    TraitTypeParamList_attribute {
+        u2 attribute_name_index;
+        u4 attribute_length;
+        u2 class_type_param_num;
+        u2 type_param_accessor_method_ref_index[class_type_param_num]; // constant pool indices of InterfaceMethodRef entries
+    }
+    */
+    private TraitTypeParamListAttribute parseTraitTypeParamList(Symbol<Name> name) {
+        assert ParserNames.TraitTypeParamList.equals(name);
+        int num = stream.readU2();
+        int[] methodRefCpis = new int[num];
+        InterfaceMethodRefConstant.Indexes[] methodRefs = new InterfaceMethodRefConstant.Indexes[num];
+        for (int i = 0; i < num; ++i) {
+            int methodRefCpi = stream.readU2();
+            methodRefCpis[i] = methodRefCpi;
+            methodRefs[i] = pool.interfaceMethodAt(methodRefCpi);
+        }
+        return new TraitTypeParamListAttribute(name, methodRefCpis, methodRefs);
     }
 
     /*

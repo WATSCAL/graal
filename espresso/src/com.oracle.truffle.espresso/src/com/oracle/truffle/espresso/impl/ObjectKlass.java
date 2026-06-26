@@ -74,6 +74,7 @@ import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceDebugExtensionAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SourceFileAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
@@ -184,6 +185,10 @@ public final class ObjectKlass extends Klass {
 
     public ClassTypeParamListAttribute getClassTypeParamListAttribute() {
         return (ClassTypeParamListAttribute) getAttribute(ClassTypeParamListAttribute.NAME);
+    }
+
+    public TraitTypeParamListAttribute getTraitTypeParamListAttribute() {
+        return (TraitTypeParamListAttribute) getAttribute(TraitTypeParamListAttribute.NAME);
     }
 
     @SuppressWarnings("this-escape")

@@ -43,6 +43,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
 import com.oracle.truffle.espresso.analysis.typehints.TypeAnalysisResult;
 import com.oracle.truffle.espresso.analysis.typehints.TypeHintAnalysis;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.impl.Method;
 import com.oracle.truffle.espresso.impl.ObjectKlass;
@@ -71,6 +72,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     
     private final int methodTypeParamCount;
     private final int classTypeParamCount;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) private final Method[] traitTypeParamAccessors;
     private TypeAnalysisResult[] analysis = null;
 
     MethodWithBytecodeNode(BytecodeNode bytecodeNode) {
@@ -82,6 +84,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         this.hasReceiver = methodVersion.getMethod().hasReceiver();
         this.methodTypeParamCount = 0;
         this.classTypeParamCount = 0;
+        this.traitTypeParamAccessors = null;
     }
 
     MethodWithBytecodeNode(Method.MethodVersion methodVersion) {
@@ -95,10 +98,14 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         this.methodTypeParamCount = attr != null ? attr.getCount() : 0;
 
         this.analysis = TypeHintAnalysis.analyze(methodVersion);
-        if ((this.hasReceiver && methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum > 0) || this.analysis != null) {
+        this.traitTypeParamAccessors = this.hasReceiver && methodVersion.getDeclaringKlass().isInterface()
+                        ? resolveTraitTypeParamAccessors(methodVersion.getDeclaringKlass())
+                        : null;
+        int classTypeParamCountForMethod = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
+        if (classTypeParamCountForMethod > 0 || this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
-            this.classTypeParamCount = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
+            this.classTypeParamCount = classTypeParamCountForMethod;
             this.specializations = new BytecodeNode[0];
             this.cacheKeys = new byte[0][];
         } else {
@@ -107,6 +114,19 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             this.frameDescriptor = t.getFrameDescriptor();
             this.classTypeParamCount = 0;
         }
+    }
+
+    private static Method[] resolveTraitTypeParamAccessors(ObjectKlass declaringKlass) {
+        TraitTypeParamListAttribute traitTypeParamListAttribute = declaringKlass.getTraitTypeParamListAttribute();
+        if (traitTypeParamListAttribute == null) {
+            return null;
+        }
+        int[] methodRefCpis = traitTypeParamListAttribute.getTypeParamAccessorMethodRefCpis();
+        Method[] accessors = new Method[methodRefCpis.length];
+        for (int i = 0; i < methodRefCpis.length; ++i) {
+            accessors[i] = declaringKlass.getConstantPool().resolvedMethodAt(declaringKlass, methodRefCpis[i]);
+        }
+        return accessors;
     }
 
     public FrameDescriptor getFrameDescriptor() {
@@ -159,7 +179,18 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     }
 
     private byte[] collectClassTypeParams(StaticObject receiver) {
+        if (traitTypeParamAccessors != null) {
+            return collectTraitTypeParams(receiver);
+        }
         return receiver.classTypeParams;
+    }
+
+    private byte[] collectTraitTypeParams(StaticObject receiver) {
+        byte[] key = new byte[traitTypeParamAccessors.length];
+        for (int i = 0; i < traitTypeParamAccessors.length; ++i) {
+            key[i] = (byte) traitTypeParamAccessors[i].invokeDirectInterface(receiver);
+        }
+        return key;
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
