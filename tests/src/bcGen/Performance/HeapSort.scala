@@ -6,10 +6,21 @@ object HeapSort:
   private final val INNER_REPEAT = 4
   private final val N = 4096
 
-  private val values = Array.tabulate(N) { i =>
-    ((i * 1103515245L + 12345L) & 0x7fffffffL).toInt
-  }
-  private val expectedSum = values.foldLeft(0L)(_ + _)
+  private val values =
+    val result = new Array[Int](N)
+    var i = 0
+    while i < N do
+      result(i) = ((i * 1103515245L + 12345L) & 0x7fffffffL).toInt
+      i += 1
+    result
+
+  private val expectedSum =
+    var result = 0L
+    var i = 0
+    while i < N do
+      result += values(i)
+      i += 1
+    result
 
   private def benchmark(): Unit =
     val queue = new PriorityQueue[Int]()
