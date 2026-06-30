@@ -2585,7 +2585,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 assert instOperandArrayElementTypes[curBCI].length == 1;
                 return new InvokeArrayLengthNode(resolved, top, curBCI, instOperandArrayElementTypes[curBCI][0]);
             }
-        } else if (resolved.getNameAsString().equals("reifiedAsInstanceOf") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime")) {
+        } else if (resolved.getNameAsString().equals("reifiedAsInstanceOf") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime$")) {
             if (instOperandTypes[curBCI] != null) {
                 assert instOperandTypes[curBCI].length == 1;
                 return new InvokeUpcastNode(resolved, top, curBCI, instOperandTypes[curBCI][0]);
@@ -2847,13 +2847,13 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     // region Field read/write
 
-    private void putFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int top, StaticObject receiver, int typeParamIdx, boolean isVolatile) {
+    private void putFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int top, StaticObject receiver, byte typeParamKind, int typeParamIdx, boolean isVolatile) {
         CompilerAsserts.partialEvaluationConstant(typeHeader);
         CompilerAsserts.partialEvaluationConstant(top);
         CompilerAsserts.partialEvaluationConstant(typeParamIdx);
         CompilerAsserts.partialEvaluationConstant(isVolatile);
         byte alternatedType = typeHeader;
-        if (alternatedType == 'L' && typeParamIdx >= 0) {
+        if (alternatedType == 'L' && typeParamKind == TypeHints.CLASS_TYPE_PARAM && typeParamIdx >= 0) {
             alternatedType = this.reifiedClassTypeParams[typeParamIdx];
         }
         CompilerAsserts.partialEvaluationConstant(alternatedType);
@@ -2934,7 +2934,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
         if (field.inSpecializedShape) {
             LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
-            putFieldSpecialized(typeHeader, specializedLinkedField, frame, top, receiver, field.genericTypeParamIdx, field.isVolatile());
+            putFieldSpecialized(typeHeader, specializedLinkedField, frame, top, receiver, field.genericTypeParamKind, field.genericTypeParamIdx, field.isVolatile());
             return -slotCount;
         }
 
@@ -3010,13 +3010,13 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         return -slotCount;
     }
 
-    private void getFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int resultAt, StaticObject receiver, int typeParamIdx, boolean isVolatile) {
+    private void getFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int resultAt, StaticObject receiver, byte typeParamKind, int typeParamIdx, boolean isVolatile) {
         CompilerAsserts.partialEvaluationConstant(typeHeader);
         CompilerAsserts.partialEvaluationConstant(resultAt);
         CompilerAsserts.partialEvaluationConstant(typeParamIdx);
         CompilerAsserts.partialEvaluationConstant(isVolatile);
         byte alternatedType = typeHeader;
-        if (alternatedType == 'L' && typeParamIdx >= 0) {
+        if (alternatedType == 'L' && typeParamKind == TypeHints.CLASS_TYPE_PARAM && typeParamIdx >= 0) {
             alternatedType = this.reifiedClassTypeParams[typeParamIdx];
         }
         if (typeHeader == 'D' || typeHeader == 'J') {
@@ -3082,7 +3082,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         CompilerAsserts.partialEvaluationConstant(field.inSpecializedShape);
         if (field.inSpecializedShape) {
             LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
-            getFieldSpecialized(typeHeader, specializedLinkedField, frame, resultAt, receiver, field.genericTypeParamIdx, field.isVolatile());
+            getFieldSpecialized(typeHeader, specializedLinkedField, frame, resultAt, receiver, field.genericTypeParamKind, field.genericTypeParamIdx, field.isVolatile());
             int slotCount = (typeHeader == 'J' || typeHeader == 'D') ? 2 : 1;
             return slotCount;
         }

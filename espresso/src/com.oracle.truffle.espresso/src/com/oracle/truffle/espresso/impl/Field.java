@@ -99,6 +99,7 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
     public final int linkedFieldIdx;
     public final boolean inSpecializedShape;
 
+    public final byte genericTypeParamKind;
     public final int genericTypeParamIdx; // valid if it has generic type, otherwise -1
 
     public Field(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isStatic, int linkedFieldIdx) {
@@ -110,7 +111,13 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
         this.inSpecializedShape = holder.linkedKlass.allTypeParamNum > 0 && !isStatic;
 
         FieldTypeAttribute fieldTypeAttr = linkedField.getParserField().getFieldTypeAttribute();
-        this.genericTypeParamIdx = fieldTypeAttr != null ? fieldTypeAttr.classTypeParamIndex : -1;
+        if (fieldTypeAttr != null && fieldTypeAttr.hint != null) {
+            this.genericTypeParamKind = fieldTypeAttr.hint.getKind();
+            this.genericTypeParamIdx = fieldTypeAttr.hint.getIndex();
+        } else {
+            this.genericTypeParamKind = 0;
+            this.genericTypeParamIdx = -1;
+        }
     }
 
     public final LinkedField getSpecializedLinkedField(byte[] classTypeParams) {

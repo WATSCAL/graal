@@ -262,7 +262,7 @@ public final class LinkedKlass {
 
         CompilerDirectives.transferToInterpreterAndInvalidate();
 
-        LinkedKlassFieldLayout.SpecializedLayout newLayout = new LinkedKlassFieldLayout.SpecializedLayout(language, this.parserKlass, this.superKlass, classTypeArgs);
+        LinkedKlassFieldLayout.SpecializedLayout newLayout = new LinkedKlassFieldLayout.SpecializedLayout(language, this, this.parserKlass, this.superKlass, classTypeArgs);
 
         int curLen = this.specializedKeys.length;
 

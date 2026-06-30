@@ -1501,7 +1501,11 @@ public final class ClassfileParser {
         assert ParserNames.FieldType.equals(name);
         byte kind = (byte) stream.readU1();
         int index = stream.readU2();
-        return kind == TypeHints.CLASS_TYPE_PARAM ? new FieldTypeAttribute(name, index) : new FieldTypeAttribute(name, -1);
+        TypeHints.TypeB hint = null;
+        if (kind == TypeHints.CLASS_TYPE_PARAM || kind == TypeHints.ARR_CLASS_TYPE_PARAM) {
+            hint = new TypeHints.TypeB(kind, index);
+        }
+        return new FieldTypeAttribute(name, hint);
     }
 
     private LineNumberTableAttribute parseLineNumberTable(Symbol<Name> name) {
