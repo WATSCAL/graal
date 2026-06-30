@@ -117,7 +117,7 @@ public class TypePropagationClosure extends BlockIteratorClosure{
     private TypeAnalysisState mergePredecessors(LinkedBlock block) {
         List<TypeAnalysisState> states = new ArrayList<>();
         //root block: method entry
-        if (block.predecessorsID().length == 0){
+        if (block == getEntry(block.graph())) {
             TypeAnalysisState rootState = new TypeAnalysisState(maxLocals, maxStack);
             MethodParameterTypeAttribute methodParameterTypeAttribute = getMethod().getMethodParameterTypeAttribute();
             Symbol<Type>[] signature = getMethod().getParsedSignature();
@@ -212,7 +212,7 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                     if (opcode == GETSTATIC || opcode == GETFIELD){
                         TypeHints.TypeB alternatedFieldType = null;
                         if (field.getKind() == JavaKind.Object && field.genericTypeParamIdx >= 0) {
-                            alternatedFieldType = new TypeHints.TypeB(TypeHints.CLASS_TYPE_PARAM, field.genericTypeParamIdx);
+                            alternatedFieldType = new TypeHints.TypeB(field.genericTypeParamKind, field.genericTypeParamIdx);
                             nonTrivial = true;
                         }
                         // push to the stack:

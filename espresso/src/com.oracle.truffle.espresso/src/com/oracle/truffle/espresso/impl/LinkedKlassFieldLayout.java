@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import com.oracle.truffle.espresso.meta.EspressoError;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.staticobject.StaticShape;
 import com.oracle.truffle.api.staticobject.StaticShape.Builder;
@@ -49,6 +50,7 @@ import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Names;
 import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Types;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject.StaticObjectFactory;
+import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 
 final class LinkedKlassFieldLayout {
     final StaticShape<StaticObjectFactory> instanceShape;
@@ -95,7 +97,6 @@ final class LinkedKlassFieldLayout {
             }
         }
 
-
             FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
             int nextInstanceFieldIndex = 0;
             int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
@@ -104,8 +105,9 @@ final class LinkedKlassFieldLayout {
             LinkedField.IdMode idMode = LinkedKlassFieldLayout.getIdMode(parserKlass);
 
             for (ParserField parserField : parserKlass.getFields()) {
-                if (parserField.getFieldTypeAttribute() != null && parserField.getFieldTypeAttribute().classTypeParamIndex >= 0) {
-                    byte alteredType = classTypeArgs[parserField.getFieldTypeAttribute().classTypeParamIndex];
+                FieldTypeAttribute attr = parserField.getFieldTypeAttribute();
+                if (attr != null && attr.hint != null && attr.hint.getKind() == TypeHints.CLASS_TYPE_PARAM && attr.hint.getIndex() >= 0) {
+                    byte alteredType = classTypeArgs[attr.hint.getIndex()];
                     assert !parserField.isStatic();
                     createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, alteredType);
                 } else if (!parserField.isStatic()) {
