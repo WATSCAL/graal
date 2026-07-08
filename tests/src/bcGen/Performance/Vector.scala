@@ -1,7 +1,5 @@
 package bcGen.Performance
 
-import scala.reflect.ClassTag
-
 final class Vector[A] private (initialCapacity: Int):
   private var elements = new Array[A](math.max(1, initialCapacity))
   private var currentSize = 0
