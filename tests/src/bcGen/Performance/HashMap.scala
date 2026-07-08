@@ -37,6 +37,7 @@ object HashMap:
     var i = 0
     while i < N do
       result(i) = i * 12345 + 123
+      i += 1
     result
 
   private val expectedSum =
