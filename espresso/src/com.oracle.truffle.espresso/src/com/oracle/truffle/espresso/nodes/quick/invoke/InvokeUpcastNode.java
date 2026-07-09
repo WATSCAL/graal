@@ -13,6 +13,7 @@ import static com.oracle.truffle.espresso.nodes.EspressoFrame.popDouble;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.popFloat;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.popInt;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.popLong;
+import static com.oracle.truffle.espresso.nodes.EspressoFrame.popObject;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.putObject;
 
 public final class InvokeUpcastNode extends InvokeScalaNode {
@@ -21,7 +22,7 @@ public final class InvokeUpcastNode extends InvokeScalaNode {
 
     public InvokeUpcastNode(Method method, int top, int callerBCI, byte inputType) {
         super(method, top, callerBCI);
-        assert resultAt == top - 1;
+        assert resultAt == top - 2;
         assert stackEffect == 0;
         assert method.isStatic();
         this.inputType = inputType;
@@ -56,6 +57,7 @@ public final class InvokeUpcastNode extends InvokeScalaNode {
                 putObject(frame, resultAt, meta.boxBoolean(popInt(frame, top - 1) != 0));
                 break;
             default:
+                putObject(frame, resultAt, popObject(frame, top - 1));
         }
 
         return stackEffect;
