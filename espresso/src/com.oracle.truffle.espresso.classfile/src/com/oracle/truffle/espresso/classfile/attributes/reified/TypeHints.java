@@ -17,6 +17,7 @@ public class TypeHints {
     public static final byte SHORT = 'S';
     public static final byte BOOLEAN = 'Z';
     public static final byte REFERENCE = 'L';
+    public static final byte RECEIVER = 'R';
     public static final byte CLASS_TYPE_PARAM = 'K';
     public static final byte METHOD_TYPE_PARAM = 'M';
     public static final byte ARR_CLASS_TYPE_PARAM = 'k';
@@ -75,7 +76,7 @@ public class TypeHints {
                 if (isPrimitive(kind)) {
                     return kind;
                 }
-                assert isGenericArray();
+                assert kind == REFERENCE || kind == RECEIVER || isGenericArray();
                 return TypeHints.REFERENCE;
             }
         }
