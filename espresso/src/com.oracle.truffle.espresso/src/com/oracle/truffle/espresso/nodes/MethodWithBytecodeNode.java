@@ -40,9 +40,11 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.analysis.typehints.TypeAnalysisResult;
 import com.oracle.truffle.espresso.analysis.typehints.TypeHintAnalysis;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.impl.Method;
@@ -89,11 +91,14 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
 
     MethodWithBytecodeNode(Method.MethodVersion methodVersion) {
         super(methodVersion);
+        Method method = methodVersion.getMethod();
         this.methodVersion = methodVersion;
         this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
-        this.hasReceiver = methodVersion.getMethod().hasReceiver();
-
         CompilerAsserts.neverPartOfCompilation();
+
+        MethodParameterTypeAttribute methodParameterTypeAttribute = method.getMethodParameterTypeAttribute();
+        this.hasReceiver = method.hasReceiver() || (method.isStatic() && methodParameterTypeAttribute != null && methodParameterTypeAttribute.getParameterTypes()[0].getKind() == TypeHints.RECEIVER);
+
         MethodTypeParameterCountAttribute attr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
         this.methodTypeParamCount = attr != null ? attr.getCount() : 0;
 
