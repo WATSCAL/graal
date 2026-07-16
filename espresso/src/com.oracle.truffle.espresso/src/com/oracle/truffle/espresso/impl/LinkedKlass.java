@@ -41,6 +41,7 @@ import com.oracle.truffle.espresso.classfile.ParserKlass;
 import com.oracle.truffle.espresso.classfile.ParserMethod;
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -121,7 +122,10 @@ public final class LinkedKlass {
         this.methods = linkedMethods;
 
         ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
-        this.curLevelTypeParamNum = typeParamList != null ? typeParamList.getTypeParams().length : 0;
+        TraitTypeParamListAttribute traitTypeParamList = (TraitTypeParamListAttribute) this.parserKlass.getAttribute(TraitTypeParamListAttribute.NAME);
+        this.curLevelTypeParamNum = Modifier.isInterface(getFlags()) ?
+                                        (traitTypeParamList != null ? traitTypeParamList.getTypeParamAccessorMethodRefs().length : 0) :
+                                        (typeParamList != null ? typeParamList.getTypeParams().length : 0);
         this.allTypeParamNum = superKlass != null ? superKlass.allTypeParamNum + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
 
         this.specializedKeys = EMPTY_BYTE_KEY;
