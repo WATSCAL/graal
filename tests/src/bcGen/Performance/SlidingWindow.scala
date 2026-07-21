@@ -31,7 +31,7 @@ object SlidingWindow:
 
   private def benchmark(): Unit =
     var repeat = 0
-    val queue = new MaxQueue[Int](WINDOW_SIZE + 1)
+    val queue = new MaxQueue[Int](WINDOW_SIZE + 1)(using new IntOrdering)
     while repeat < INNER_REPEAT do
       queue.clear()
       var total = 0L

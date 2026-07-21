@@ -1,8 +1,8 @@
 package bcGen.Performance
 
-final class Vector[A] private (initialCapacity: Int):
-  private var elements = new Array[A](math.max(1, initialCapacity))
-  private var currentSize = 0
+class Vector[A](initialCapacity: Int):
+  var elements = new Array[A](math.max(1, initialCapacity))
+  var currentSize = 0
 
   def isEmpty: Boolean = currentSize == 0
 

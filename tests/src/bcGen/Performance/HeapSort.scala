@@ -23,7 +23,7 @@ object HeapSort:
     result
 
   private def benchmark(): Unit =
-    val queue = new PriorityQueue[Int]()
+    val queue = new PriorityQueue[Int](using new IntOrdering)
     var repeat = 0
     while repeat < INNER_REPEAT do
       var i = 0
