@@ -64,6 +64,7 @@ import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_1;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_2;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.LSTORE_3;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.RET;
+import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.NEW;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.isLoad;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.isStore;
 
@@ -72,6 +73,7 @@ import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
 import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
 import com.oracle.truffle.espresso.impl.Method;
+import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
 
 /**
  * Examines each block's opodes to find all relevant history for Liveness analysis (ie: finds LOADs,
@@ -83,12 +85,20 @@ public final class LoadStoreFinder {
     private final History[] blockHistory;
     private final BytecodeStream bs;
     private final boolean doNotClearThis;
+    private final int[][] allocTypeArgSlotIndices;
 
     public LoadStoreFinder(Graph<? extends LinkedBlock> graph, Method method, boolean doNotClearThis) {
         this.graph = graph;
         this.blockHistory = new History[graph.totalBlocks()];
         this.bs = new BytecodeStream(method.getOriginalCode());
         this.doNotClearThis = doNotClearThis;
+        this.allocTypeArgSlotIndices = new int[this.bs.endBCI()][];
+        BCNewTypeArgsAttribute allocTypeArgsAttr = method.getBCNewTypeArgsAttribute();
+        if (allocTypeArgsAttr != null) {
+            for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
+                this.allocTypeArgSlotIndices[entry.bcOffset()] = entry.localSlotIndices();
+            }
+        }
     }
 
     public void analyze() {
@@ -115,6 +125,12 @@ public final class LoadStoreFinder {
             } else if (doNotClearThis && (Bytecodes.isControlSink(opcode))) {
                 // Ensures 'this' is alive across the entire method.
                 record = new Record(bci, 0, TYPE.LOAD);
+            } else if (opcode == NEW) {
+                if (allocTypeArgSlotIndices[bci] != null) {
+                    for (int localIndex : allocTypeArgSlotIndices[bci]) {
+                        history.add(new Record(bci, localIndex, TYPE.LOAD));
+                    }
+                }
             }
             if (record != null) {
                 history.add(record);
