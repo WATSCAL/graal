@@ -1,6 +1,6 @@
 package bcGen.Performance
 
-final class MaxQueue[A](initialCapacity: Int)(using ordering: Ordering[A]) extends Deque[A](initialCapacity):
+final class MaxQueue[A](initialCapacity: Int)(using ordering: TotalOrdering[A]) extends Deque[A](initialCapacity):
 
   def enqueue(value: A): Unit =
     while nonEmpty && ordering.lt(back, value) do
