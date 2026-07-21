@@ -712,7 +712,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     @Override
     public Object execute(VirtualFrame frame) {
-        int startTop = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+        int startTop = startingStackOffset(getMethodVersion().getMaxLocals());
         if (methodVersion.hasJsr()) {
             getLanguage().getThreadLocalState().blockContinuationSuspension();
         }
@@ -1364,7 +1364,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
                         // This branch must not be a loop exit.
                         // Let the next loop iteration return this
-                        top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                        top = startingStackOffset(getMethodVersion().getMaxLocals());
                         frame.setObjectStatic(top, returnValue);
                         top++;
                         curBCI = returnValueBci;
@@ -1605,7 +1605,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                          * (and thus lose partial-evaluation constants too early). When reached, the
                          * object at stack slot 0 should be returned.
                          */
-                        assert top == startingStackOffset(getMethodVersion().getMaxLocals(), 0) + 1;
+                        assert top == startingStackOffset(getMethodVersion().getMaxLocals()) + 1;
                         assert curBCI == returnValueBci;
                         return frame.getObjectStatic(top - 1);
                     case THROW_VALUE:
@@ -1614,7 +1614,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                          * (and thus lose partial-evaluation constants too early). When reached, the
                          * object at stack slot 0 should be thrown.
                          */
-                        assert top == startingStackOffset(getMethodVersion().getMaxLocals(), 0) + 1;
+                        assert top == startingStackOffset(getMethodVersion().getMaxLocals()) + 1;
                         assert curBCI == throwValueBci;
                         throw new ThrowOutOfInterpreterLoop((RuntimeException) frame.getObjectStatic(top - 1));
 
@@ -1633,7 +1633,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     instrument.notifyYieldAt(frame, unwindContinuationExceptionRequest.getContinuation(), statementIndex);
                 }
                 // This branch must not be a loop exit. Let the next loop iteration throw this
-                top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                top = startingStackOffset(getMethodVersion().getMaxLocals());
                 frame.setObjectStatic(top, unwindContinuationExceptionRequest);
                 top++;
                 curBCI = throwValueBci;
@@ -1661,7 +1661,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         for (int i = 0; i < stackOverflowErrorInfo.length; i += 3) {
                             if (curBCI >= stackOverflowErrorInfo[i] && curBCI < stackOverflowErrorInfo[i + 1]) {
                                 clearOperandStack(frame, top);
-                                top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                                top = startingStackOffset(getMethodVersion().getMaxLocals());
                                 putObject(frame, top, wrappedStackOverflowError.getGuestException());
                                 top++;
                                 int targetBCI = stackOverflowErrorInfo[i + 2];
@@ -1728,7 +1728,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         // on a different line than the exception point
                         TruffleStackTrace.fillIn(wrappedException);
                         clearOperandStack(frame, top);
-                        top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                        top = startingStackOffset(getMethodVersion().getMaxLocals());
                         checkNoForeignObjectAssumption(wrappedException.getGuestException());
                         putObject(frame, top, wrappedException.getGuestException());
                         top++;
@@ -1746,7 +1746,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
                         // This branch must not be a loop exit.
                         // Let the next loop iteration throw this
-                        top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                        top = startingStackOffset(getMethodVersion().getMaxLocals());
                         frame.setObjectStatic(top, wrappedException);
                         top++;
                         curBCI = throwValueBci;
@@ -1763,7 +1763,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 }
 
                 // This branch must not be a loop exit. Let the next loop iteration return this
-                top = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+                top = startingStackOffset(getMethodVersion().getMaxLocals());
                 frame.setObjectStatic(top, returnValue);
                 top++;
                 curBCI = returnValueBci;
@@ -1923,7 +1923,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     @ExplodeLoop
     private void clearOperandStack(VirtualFrame frame, int top) {
-        int stackStart = startingStackOffset(getMethodVersion().getMaxLocals(), 0);
+        int stackStart = startingStackOffset(getMethodVersion().getMaxLocals());
         for (int slot = top - 1; slot >= stackStart; --slot) {
             clear(frame, slot);
         }

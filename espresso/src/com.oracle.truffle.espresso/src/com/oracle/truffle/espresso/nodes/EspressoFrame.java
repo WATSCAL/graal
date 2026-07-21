@@ -346,12 +346,8 @@ public final class EspressoFrame {
         return encodedBCI - 1;
     }
 
-    public static int startingReifiedTypesOffset(int maxLocals) {
+    public static int startingStackOffset(int maxLocals) {
         return VALUES_START + maxLocals;
-    }
-
-    public static int startingStackOffset(int maxLocals, int reifiedTypesCnt) {
-        return VALUES_START + maxLocals + reifiedTypesCnt;
     }
 
     public static StaticObject peekReceiver(VirtualFrame frame, int top, Method m) {
