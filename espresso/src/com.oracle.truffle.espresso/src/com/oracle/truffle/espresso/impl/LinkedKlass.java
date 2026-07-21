@@ -266,6 +266,14 @@ public final class LinkedKlass {
 
         CompilerDirectives.transferToInterpreterAndInvalidate();
 
+        /*
+        System.err.print("insert class specialization for " + parserKlass.getName().toString() + ":");
+        for (byte b : classTypeArgs) {
+            System.err.print(" " + b);
+        }
+        System.err.print('\n');
+        */
+
         LinkedKlassFieldLayout.SpecializedLayout newLayout = new LinkedKlassFieldLayout.SpecializedLayout(language, this, this.parserKlass, this.superKlass, classTypeArgs);
 
         int curLen = this.specializedKeys.length;

@@ -1819,6 +1819,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
+    @ExplodeLoop
     private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);

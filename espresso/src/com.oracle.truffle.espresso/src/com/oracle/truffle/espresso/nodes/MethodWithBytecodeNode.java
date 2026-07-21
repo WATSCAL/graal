@@ -51,6 +51,7 @@ import com.oracle.truffle.espresso.impl.Method;
 import com.oracle.truffle.espresso.impl.ObjectKlass;
 import com.oracle.truffle.espresso.impl.SuppressFBWarnings;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
+import com.oracle.truffle.espresso.meta.EspressoError;
 
 /**
  * {@link RootTag} node that separates the Java method prolog e.g. copying arguments to the frame,
@@ -107,6 +108,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
                         ? resolveTraitTypeParamAccessors(methodVersion.getDeclaringKlass())
                         : null;
         int classTypeParamCountForMethod = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
+
         if (classTypeParamCountForMethod > 0 || this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
@@ -215,6 +217,23 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
 
     private BytecodeNode insertSpecialization(byte[] methodTypeParams, byte[] classTypeParams) {
         CompilerAsserts.neverPartOfCompilation();
+
+        /*
+        System.err.println("insert specialization for " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
+        System.err.println("method type params:");
+        for (byte b : methodTypeParams) {
+            System.err.print(b);
+            System.err.print(' ');
+        }
+        System.err.print('\n');
+        System.err.println("class type params:");
+        for (byte b : classTypeParams) {
+            System.err.print(b);
+            System.err.print(' ');
+        }
+        System.err.print('\n');
+        */
+
 
         byte[] classTypeParamsUntilCurLevel = new byte[classTypeParamCount];
         for (int i = 0; i < classTypeParamCount; ++i) {

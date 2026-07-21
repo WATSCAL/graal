@@ -1,0 +1,397 @@
+2013|Invoke#InvokeStaticQuickNode.guestBoxInt: jdk.graal.compiler.nodes.InvokeWithExceptionNode
+  2015|FrameState@259
+    usages:
+      2013|Invoke#InvokeStaticQuickNode.guestBoxInt
+    values:
+      1979|Constant(Instance<com.oracle.truffle.espresso.nodes.quick.invoke.InvokeStaticQuickNode>, a java.lang.Object)
+      30|VirtualInstance(-1) FrameWithoutBoxing
+      2013|Invoke#InvokeStaticQuickNode.guestBoxInt
+    virtual object mappings:
+      3084|VirtualObjectState for 30|VirtualInstance(-1) FrameWithoutBoxing
+      3085|VirtualObjectState for 3067|VirtualInstance(-1) BytecodeNode$Counter
+      3102|VirtualObjectState for 34|VirtualArray(-1) Ljava/lang/Object;[11]
+      3103|VirtualObjectState for 35|VirtualArray(-1) J[11]
+      3104|VirtualObjectState for 36|VirtualArray(-1) B[11]
+  3532|VirtualObjectState
+    usages:
+      3306|FrameState@495
+      3309|FrameState@492
+      3299|FrameState@724
+      3296|FrameState@727
+    object: 3107|VirtualArray(1) Ljava/lang/Object;[3]
+    object usages:
+      3532|VirtualObjectState
+      3299|FrameState@724
+      3296|FrameState@727
+      3480|VirtualObjectState
+    values:
+      1745|Constant(Instance<com.oracle.truffle.api.staticobject.GeneratedStaticObject$$1309>, a java.lang.Object)
+      2013|Invoke#InvokeStaticQuickNode.guestBoxInt
+      3531|VirtualBoxing(2) Byte
+  3295|MethodCallTarget
+    usages:
+      3294|Invoke#Meta.unboxInteger
+
+2558|Invoke#InvokeStaticQuickNode.guestUnboxInt: jdk.graal.compiler.nodes.InvokeWithExceptionNode
+  2560|FrameState@568
+    usages:
+      2558|Invoke#InvokeStaticQuickNode.guestUnboxInt
+    values:
+      2521|Constant(Instance<com.oracle.truffle.espresso.nodes.quick.invoke.InvokeStaticQuickNode>, a java.lang.Object)
+      30|VirtualInstance(-1) FrameWithoutBoxing
+      2558|Invoke#InvokeStaticQuickNode.guestUnboxInt
+    virtual object mappings:
+      3084|VirtualObjectState for 30|VirtualInstance(-1) FrameWithoutBoxing
+      3085|VirtualObjectState for 3067|VirtualInstance(-1) BytecodeNode$Counter
+      3115|VirtualObjectState for 34|VirtualArray(-1) Ljava/lang/Object;[11]
+      3119|VirtualObjectState for 35|VirtualArray(-1) J[11]
+      3117|VirtualObjectState for 36|VirtualArray(-1) B[11]
+  2673|+
+    usages:
+      3125|ZeroExtend
+
+3294|Invoke#Meta.unboxInteger: jdk.graal.compiler.nodes.InvokeWithExceptionNode
+  3296|FrameState@727
+    usages:
+      3294|Invoke#Meta.unboxInteger
+    values:
+      3143|VirtualInstance(-1) FrameWithoutBoxing
+      37|Constant(1, i32)
+      3294|Invoke#Meta.unboxInteger
+      3277|Constant(Instance<com.oracle.truffle.espresso.nodes.BytecodeNode>, a java.lang.Object)
+      3143|VirtualInstance(-1) FrameWithoutBoxing
+      3107|VirtualArray(1) Ljava/lang/Object;[3]
+      null
+      37|Constant(1, i32)
+      37|Constant(1, i32)
+      3181|Constant(Instance<com.oracle.truffle.espresso.classfile.descriptors.Symbol[]>, a java.lang.Object)
+      37|Constant(1, i32)
+      5|Constant(0, i32)
+    virtual object mappings:
+      3480|VirtualObjectState for 3143|VirtualInstance(-1) FrameWithoutBoxing
+      3501|VirtualObjectState for 3144|VirtualArray(-1) Ljava/lang/Object;[4]
+      3482|VirtualObjectState for 3145|VirtualArray(-1) J[4]
+      3483|VirtualObjectState for 3146|VirtualArray(-1) B[4]
+      3532|VirtualObjectState for 3107|VirtualArray(1) Ljava/lang/Object;[3]
+      3533|VirtualObjectState for 3531|VirtualBoxing(2) Byte
+  3305|MethodCallTarget
+    usages:
+      3304|Invoke#Meta.boxInteger
+  3504|VirtualObjectState
+    usages:
+      3306|FrameState@495
+      3309|FrameState@492
+    object: 3145|VirtualArray(-1) J[4]
+    object usages:
+      3480|VirtualObjectState
+      3482|VirtualObjectState
+      3504|VirtualObjectState
+    values:
+      38|Constant(2, i32)
+      null
+      3294|Invoke#Meta.unboxInteger
+      null
+
+3304|Invoke#Meta.boxInteger: jdk.graal.compiler.nodes.InvokeWithExceptionNode
+  3306|FrameState@495
+    usages:
+      3304|Invoke#Meta.boxInteger
+    values:
+      3304|Invoke#Meta.boxInteger
+    virtual object mappings:
+      3480|VirtualObjectState for 3143|VirtualInstance(-1) FrameWithoutBoxing
+      3503|VirtualObjectState for 3502|VirtualInstance(-1) BytecodeNode$Counter
+      3501|VirtualObjectState for 3144|VirtualArray(-1) Ljava/lang/Object;[4]
+      3504|VirtualObjectState for 3145|VirtualArray(-1) J[4]
+      3487|VirtualObjectState for 3146|VirtualArray(-1) B[4]
+      3532|VirtualObjectState for 3107|VirtualArray(1) Ljava/lang/Object;[3]
+      3533|VirtualObjectState for 3531|VirtualBoxing(2) Byte
+  2559|MethodCallTarget
+    usages:
+      2558|Invoke#InvokeStaticQuickNode.guestUnboxInt
+
+Sum of 1000000 identities of 42 is 42000000
+
+FrameState|3306 com.oracle.truffle.espresso.nodes.BytecodeNode.getReturnValueAsObject(BytecodeNode.java:2123) [bci: 495] BeforePop
+locals: [_, _, _, _, _]
+stack: [3304]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1608) [bci: 5497]
+locals: [3277, 3143, _, _, _, _, _, 14, 814, 5, 5, 3502, 37, 40, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.execute(BytecodeNode.java:857) [bci: 59]
+locals: [3277, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.MethodWithBytecodeNode.execute(MethodWithBytecodeNode.java:122) [bci: 261]
+locals: [_, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.EspressoRootNode$Default.execute(EspressoRootNode.java:411) [bci: 104]
+locals: [_, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [2355, 3143, 3148, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.callInlined(OptimizedCallTarget.java:619) [bci: 23]
+locals: [_, 2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedDirectCallNode.call(OptimizedDirectCallNode.java:94) [bci: 30]
+locals: [2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecial$WithoutNullCheck.callDirect(InvokeSpecial.java:106) [bci: 24]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecialNodeGen$WithoutNullCheckNodeGen.execute(InvokeSpecialNodeGen.java:138) [bci: 66]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.quick.invoke.InvokeSpecialQuickNode.execute(InvokeSpecialQuickNode.java:45) [bci: 24]
+locals: [_, _, _, _]
+stack: [2155, 30]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1824) [bci: 6932]
+locals: [69, 30, _, _, _, _, _, 14, 814, 5, 5, 3067, 1119, 46, 1905, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: [46]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeOSR(BytecodeNode.java:810) [bci: 21]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.api.nodes.BytecodeOSRNode.executeOSR(BytecodeOSRNode.java:146) [bci: 24]
+locals: [_, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BytecodeOSRRootNode.executeOSR(BytecodeOSRRootNode.java:114) [bci: 144]
+locals: [_, 30, 69, 3058, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BaseOSRRootNode.execute(BaseOSRRootNode.java:74) [bci: 2]
+locals: [23, 30, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [1, 30, 62, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.profiledPERoot(OptimizedCallTarget.java:747) [bci: 40]
+locals: [1, _, _, _]
+stack: []
+locks: []
+
+FrameState|3309 com.oracle.truffle.espresso.nodes.BytecodeNode.getReturnValueAsObject(BytecodeNode.java:2123) [bci: 492] Rethrow
+locals: [_, _, _, _, _]
+stack: [3308]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1608) [bci: 5497]
+locals: [3277, 3143, _, _, _, _, _, 14, 814, 5, 5, 3502, 37, 40, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.execute(BytecodeNode.java:857) [bci: 59]
+locals: [3277, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.MethodWithBytecodeNode.execute(MethodWithBytecodeNode.java:122) [bci: 261]
+locals: [_, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.EspressoRootNode$Default.execute(EspressoRootNode.java:411) [bci: 104]
+locals: [_, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [2355, 3143, 3148, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.callInlined(OptimizedCallTarget.java:619) [bci: 23]
+locals: [_, 2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedDirectCallNode.call(OptimizedDirectCallNode.java:94) [bci: 30]
+locals: [2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecial$WithoutNullCheck.callDirect(InvokeSpecial.java:106) [bci: 24]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecialNodeGen$WithoutNullCheckNodeGen.execute(InvokeSpecialNodeGen.java:138) [bci: 66]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.quick.invoke.InvokeSpecialQuickNode.execute(InvokeSpecialQuickNode.java:45) [bci: 24]
+locals: [_, _, _, _]
+stack: [2155, 30]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1824) [bci: 6932]
+locals: [69, 30, _, _, _, _, _, 14, 814, 5, 5, 3067, 1119, 46, 1905, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: [46]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeOSR(BytecodeNode.java:810) [bci: 21]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.api.nodes.BytecodeOSRNode.executeOSR(BytecodeOSRNode.java:146) [bci: 24]
+locals: [_, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BytecodeOSRRootNode.executeOSR(BytecodeOSRRootNode.java:114) [bci: 144]
+locals: [_, 30, 69, 3058, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BaseOSRRootNode.execute(BaseOSRRootNode.java:74) [bci: 2]
+locals: [23, 30, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [1, 30, 62, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.profiledPERoot(OptimizedCallTarget.java:747) [bci: 40]
+locals: [1, _, _, _]
+stack: []
+locks: []
+
+FrameState|3299 com.oracle.truffle.espresso.nodes.BytecodeNode.initArguments(BytecodeNode.java:665) [bci: 724] Rethrow
+locals: [3277, 3143, 3107, _, 37, 37, 3181, 37, 5, _, _]
+stack: [3298]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.initializeFrame(BytecodeNode.java:754) [bci: 7]
+locals: [_, 3143]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.MethodWithBytecodeNode.execute(MethodWithBytecodeNode.java:121) [bci: 251]
+locals: [3149, 3143, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.EspressoRootNode$Default.execute(EspressoRootNode.java:411) [bci: 104]
+locals: [_, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [2355, 3143, 3148, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.callInlined(OptimizedCallTarget.java:619) [bci: 23]
+locals: [_, 2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedDirectCallNode.call(OptimizedDirectCallNode.java:94) [bci: 30]
+locals: [2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecial$WithoutNullCheck.callDirect(InvokeSpecial.java:106) [bci: 24]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecialNodeGen$WithoutNullCheckNodeGen.execute(InvokeSpecialNodeGen.java:138) [bci: 66]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.quick.invoke.InvokeSpecialQuickNode.execute(InvokeSpecialQuickNode.java:45) [bci: 24]
+locals: [_, _, _, _]
+stack: [2155, 30]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1824) [bci: 6932]
+locals: [69, 30, _, _, _, _, _, 14, 814, 5, 5, 3067, 1119, 46, 1905, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: [46]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeOSR(BytecodeNode.java:810) [bci: 21]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.api.nodes.BytecodeOSRNode.executeOSR(BytecodeOSRNode.java:146) [bci: 24]
+locals: [_, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BytecodeOSRRootNode.executeOSR(BytecodeOSRRootNode.java:114) [bci: 144]
+locals: [_, 30, 69, 3058, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BaseOSRRootNode.execute(BaseOSRRootNode.java:74) [bci: 2]
+locals: [23, 30, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [1, 30, 62, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.profiledPERoot(OptimizedCallTarget.java:747) [bci: 40]
+locals: [1, _, _, _]
+stack: []
+locks: []
+
+FrameState|3296 com.oracle.truffle.espresso.nodes.BytecodeNode.initArguments(BytecodeNode.java:665) [bci: 727] BeforePop
+locals: [3277, 3143, 3107, _, 37, 37, 3181, 37, 5, _, _]
+stack: [3143, 37, 3098]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.initializeFrame(BytecodeNode.java:754) [bci: 7]
+locals: [_, 3143]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.MethodWithBytecodeNode.execute(MethodWithBytecodeNode.java:121) [bci: 251]
+locals: [3149, 3143, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.EspressoRootNode$Default.execute(EspressoRootNode.java:411) [bci: 104]
+locals: [_, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [2355, 3143, 3148, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.callInlined(OptimizedCallTarget.java:619) [bci: 23]
+locals: [_, 2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedDirectCallNode.call(OptimizedDirectCallNode.java:94) [bci: 30]
+locals: [2350, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecial$WithoutNullCheck.callDirect(InvokeSpecial.java:106) [bci: 24]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.bytecodes.InvokeSpecialNodeGen$WithoutNullCheckNodeGen.execute(InvokeSpecialNodeGen.java:138) [bci: 66]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.espresso.nodes.quick.invoke.InvokeSpecialQuickNode.execute(InvokeSpecialQuickNode.java:45) [bci: 24]
+locals: [_, _, _, _]
+stack: [2155, 30]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeBodyFromBCI(BytecodeNode.java:1824) [bci: 6932]
+locals: [69, 30, _, _, _, _, _, 14, 814, 5, 5, 3067, 1119, 46, 1905, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+stack: [46]
+locks: []
+com.oracle.truffle.espresso.nodes.BytecodeNode.executeOSR(BytecodeNode.java:810) [bci: 21]
+locals: [_, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.api.nodes.BytecodeOSRNode.executeOSR(BytecodeOSRNode.java:146) [bci: 24]
+locals: [_, _, _, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BytecodeOSRRootNode.executeOSR(BytecodeOSRRootNode.java:114) [bci: 144]
+locals: [_, 30, 69, 3058, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.BaseOSRRootNode.execute(BaseOSRRootNode.java:74) [bci: 2]
+locals: [23, 30, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.executeRootNode(OptimizedCallTarget.java:823) [bci: 5]
+locals: [1, 30, 62, _, _, _]
+stack: []
+locks: []
+com.oracle.truffle.runtime.OptimizedCallTarget.profiledPERoot(OptimizedCallTarget.java:747) [bci: 40]
+locals: [1, _, _, _]
+stack: []
+locks: []
