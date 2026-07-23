@@ -355,10 +355,12 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     @CompilationFinal(dimensions = 2)
     private final int[][] allocTypeArgSlotIndices;
 
+    private final int methodTypeParamStartIndex; // index in parameter list, not argument array
+
     @CompilerDirectives.CompilationFinal
     public static final boolean DEBUG = false;
 
-    public BytecodeNode(MethodVersion methodVersion, TypeAnalysisResult[] instOperandTypeHints, byte[] reifiedMethodTypeParams, byte[] reifiedClassTypeParams) {
+    public BytecodeNode(MethodVersion methodVersion, TypeAnalysisResult[] instOperandTypeHints, byte[] reifiedMethodTypeParams, byte[] reifiedClassTypeParams, int methodTypeParamStartIndex) {
         CompilerAsserts.neverPartOfCompilation();
         Method method = methodVersion.getMethod();
         assert method.hasBytecodes();
@@ -446,6 +448,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             }
         }
 
+        this.methodTypeParamStartIndex = methodTypeParamStartIndex;
+
         this.frameDescriptor = calcFrameDescriptor(methodVersion);
         this.noForeignObjects = Truffle.getRuntime().createAssumption("noForeignObjects");
         this.implicitExceptionProfile = false;
@@ -496,8 +500,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
         CompilerAsserts.partialEvaluationConstant(argCount);
         for (int i = 0; i < argCount; ++i) {
-            if (i < this.reifiedMethodTypeParams.length) {
-                setLocalInt(frame, curSlot, this.reifiedMethodTypeParams[i]);
+            if (i >= methodTypeParamStartIndex && i < methodTypeParamStartIndex + reifiedMethodTypeParams.length) {
+                setLocalInt(frame, curSlot, this.reifiedMethodTypeParams[i - methodTypeParamStartIndex]);
             } else {
                 Symbol<Type> argType = SignatureSymbols.parameterType(methodSignature, i);
                 // @formatter:off

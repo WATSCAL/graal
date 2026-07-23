@@ -69,6 +69,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     private final FrameDescriptor frameDescriptor;
     private final boolean trivialBytecode;
     private final boolean hasReceiver;
+    private final boolean hasStaticForwarderReceiver;
 
     @Children BytecodeNode[] specializations = null;
     @CompilerDirectives.CompilationFinal(dimensions=2) private byte[][] cacheKeys = null;
@@ -84,6 +85,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         this.methodVersion = bytecodeNode.getMethodVersion();
         this.frameDescriptor = bytecodeNode.getFrameDescriptor();
         this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
+        this.hasStaticForwarderReceiver = false;
         this.hasReceiver = methodVersion.getMethod().hasReceiver();
         this.methodTypeParamCount = 0;
         this.classTypeParamCount = 0;
@@ -98,7 +100,8 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         CompilerAsserts.neverPartOfCompilation();
 
         MethodParameterTypeAttribute methodParameterTypeAttribute = method.getMethodParameterTypeAttribute();
-        this.hasReceiver = method.hasReceiver() || (method.isStatic() && methodParameterTypeAttribute != null && methodParameterTypeAttribute.getParameterTypes()[0].getKind() == TypeHints.RECEIVER);
+        this.hasStaticForwarderReceiver = method.isStatic() && methodParameterTypeAttribute != null && methodParameterTypeAttribute.getParameterTypes().length > 0 && methodParameterTypeAttribute.getParameterTypes()[0].getKind() == TypeHints.RECEIVER;
+        this.hasReceiver = method.hasReceiver() || hasStaticForwarderReceiver;
 
         MethodTypeParameterCountAttribute attr = methodVersion.getMethod().getMethodTypeParameterCountAttribute();
         this.methodTypeParamCount = attr != null ? attr.getCount() : 0;
@@ -116,7 +119,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             this.specializations = new BytecodeNode[0];
             this.cacheKeys = new byte[0][];
         } else {
-            BytecodeNode t = new BytecodeNode(methodVersion, null, TypeHints.EMPTY_TYPE_ARGS, TypeHints.EMPTY_TYPE_ARGS);
+            BytecodeNode t = new BytecodeNode(methodVersion, null, TypeHints.EMPTY_TYPE_ARGS, TypeHints.EMPTY_TYPE_ARGS, hasStaticForwarderReceiver ? 1 : 0);
             this.bytecodeNode = t;
             this.frameDescriptor = t.getFrameDescriptor();
             this.classTypeParamCount = 0;
@@ -239,7 +242,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         for (int i = 0; i < classTypeParamCount; ++i) {
             classTypeParamsUntilCurLevel[i] = classTypeParams[i];
         }
-        BytecodeNode node = new BytecodeNode(methodVersion, analysis, methodTypeParams, classTypeParamsUntilCurLevel);
+        BytecodeNode node = new BytecodeNode(methodVersion, analysis, methodTypeParams, classTypeParamsUntilCurLevel, hasStaticForwarderReceiver ? 1 : 0);
         node = this.insert(node);
 
         int len = specializations.length;
