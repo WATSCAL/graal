@@ -23,8 +23,8 @@ public final class InvokeUpcastNode extends InvokeScalaNode {
     public InvokeUpcastNode(Method method, int top, int callerBCI, byte inputType) {
         super(method, top, callerBCI);
         assert resultAt == top - 2;
-        assert stackEffect == 0;
-        assert method.isStatic();
+        assert stackEffect == -1;
+        assert !method.isStatic();
         this.inputType = inputType;
     }
 
