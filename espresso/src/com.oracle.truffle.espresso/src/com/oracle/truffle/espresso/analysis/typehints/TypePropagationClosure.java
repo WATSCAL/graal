@@ -288,10 +288,14 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                             state.stackTop -= 4;
                             break;
                         }
-                        if (resolvedMethod.getNameAsString().equals("reifiedAsInstanceOf") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime")) {
+                        // reifiedAsInstanceOf is compiled to an invokeVirtual
+                        // stack: [receiver, argument] -> [result]
+                        if (resolvedMethod.getNameAsString().equals("reifiedAsInstanceOf") && resolvedMethod.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime$")) {
                             TypeHints.TypeB[] argsHint = new TypeHints.TypeB[1];
                             argsHint[0] = state.stack[state.stackTop - 1];
-                            state.stack[state.stackTop - 1] = null;
+                            state.stack[state.stackTop - 2] = null; // returned Object in the place of the receiver
+                            state.stack[state.stackTop - 1] = null; 
+                            state.stackTop -= 1;
                             this.resAtBCI[bci] = new TypeAnalysisResult(argsHint, null, false);
                             break;
                         }
