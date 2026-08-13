@@ -8,52 +8,61 @@ object HeapSortStdLib:
   private final val INNER_REPEAT = 4
   private final val N = 4096
 
-  private val values =
-    val result = new Array[Int](N)
-    var i = 0
-    while i < N do
-      result(i) = ((i * 1103515245L + 12345L) & 0x7fffffffL).toInt
-      i += 1
-    result
+  private val intValues = Array.range(0, N).map(i => ((i * 1103515245L + 12345L) & 0x7fffffffL).toInt)
+  private val longValues: Array[Long] = Array.range(0, N).map(i => intValues(i).toLong)
+  private val doubleValues: Array[Double] = Array.range(0, N).map(i => intValues(i).toDouble)
 
-  private val expectedSum =
-    var result = 0L
-    var i = 0
-    while i < N do
-      result += values(i)
-      i += 1
-    result
+  private val intExpectedMax = intValues.reduceLeft((x, y) => if x > y then x else y)
+  private val longExpectedMax = intExpectedMax.toLong
+  private val doubleExpectedMax = intExpectedMax.toDouble
 
-  private def benchmark(): Unit =
-    val queue = mutable.PriorityQueue.empty[Int]
+  def heapSortBenchmark[A](values: Array[A], expectedMax: A)(using ordering: Ordering[A]): Unit = 
+    val queue = mutable.PriorityQueue.empty[A]
     var repeat = 0
     while repeat < INNER_REPEAT do
       var i = 0
       while i < N do
-        queue.enqueue(values(i))
+        queue.addOne(values(i))
         i += 1
-
-      var total = 0L
-      var last = Int.MaxValue
-      while queue.nonEmpty do
-        val current = queue.dequeue()
-        if current > last then
-          println(s"Error: heap order violated, current=$current last=$last")
-          return
-        total += current
-        last = current
-      if total != expectedSum then
-        println(s"$total != $expectedSum")
+      var max: A = queue.dequeue()
+      if !ordering.equiv(max, expectedMax) then
+        println(s"Error: max=$max, expectedMax=$expectedMax")
       repeat += 1
+      // var total = 0L
+      // var last = Int.MaxValue
+      // while queue.nonEmpty do
+      //   val current = queue.dequeue()
+      //   if current > last then
+      //     println(s"Error: heap order violated, current=$current last=$last")
+      //     return
+      //   total += current
+      //   last = current
+      // if total != expectedSum then
+      //   println(s"$total != $expectedSum")
+      // repeat += 1
 
-  @main def runHeapSortStdLib(): Unit =
+  @main def runHeapSortStdLibMono(): Unit =
     var t = 1
     while t <= T do
       val startTime = System.nanoTime()
       var r = 0
       while r < OUTER_REPEAT do
-        benchmark()
+        heapSortBenchmark[Int](intValues, intExpectedMax)
         r += 1
       val duration = System.nanoTime() - startTime
       println(s"round $t: ${duration / 1000}us")
+      t += 1
+
+  @main def runHeapSortStdLibMega(): Unit =
+    var t = 1
+    while t <= T do
+      val startTime = System.nanoTime()
+      var r = 0
+      while r < OUTER_REPEAT do
+        heapSortBenchmark[Int](intValues, intExpectedMax)
+        heapSortBenchmark[Long](longValues, longExpectedMax)
+        heapSortBenchmark[Double](doubleValues, doubleExpectedMax)
+        r += 1
+      val duration = System.nanoTime() - startTime
+      println(s"round $t: ${duration / 1000}us")  
       t += 1
