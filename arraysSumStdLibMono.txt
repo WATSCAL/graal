@@ -1,0 +1,120 @@
+round 1: 20522082us
+round 2: 20164465us
+round 3: 20184504us
+NFI signatures created: 385
+BCL loadKlassCount: 4728
+BCL loadKlassCacheHits: 3706
+UTF8 Constant Pool entries: 129001
+Klass.lookupMethod call count: 5075
+Klass.lookupField call count: 3350
+Klass.lookupDeclaredMethod call count: 6071
+Klass.lookupDeclaredField call count: 3510
+Executed bytecodes: 20210054450
+Quickened bytecodes: 9339
+Quickened invokes (excluding INDY): 9216
+ClassConstant.resolve calls: 3605
+FieldRef.resolve calls: 3108
+MethodRef.resolve calls: 5172
+Splits for: [<init>]: 0
+Native method calls: 5060
+Splits for: [registerNatives]: 0
+Reference typed parameter to primitive type: 600008296
+aload to primitive type: 1199410594
+astore to primitive type: 599702298
+areturn to primitive type: 602106008
+getfield to primitive type: 0
+putfield to primitive type: 0
+array_apply to primitive type: 2300
+array_update to primitive type: 2000
+Splits for: [initialize, initialize]: 0
+Splits for: [currentThread]: 0
+Splits for: [nanoTime]: 0
+System.arraycopy call count: 11413
+System.identityHashCode call count: 14
+Splits for: [hashCode]: 0
+Splits for: [floatToRawIntBits]: 0
+Splits for: [doubleToRawLongBits]: 0
+Splits for: [longBitsToDouble]: 0
+Splits for: [getCallerClass]: 0
+Splits for: [reachabilityFence]: 0
+Splits for: [registerNatives, registerNatives]: 0
+Splits for: [arrayBaseOffset, arrayBaseOffset0]: 0
+Splits for: [arrayIndexScale, arrayIndexScale0]: 0
+Splits for: [isPrimitive]: 0
+Splits for: [arraycopy]: 25
+Splits for: [objectFieldOffset1]: 0
+Splits for: [storeFence, storeFence]: 0
+Splits for: [compareAndSetInt, compareAndSetInt]: 0
+Splits for: [getObjectVolatile, getObjectVolatile, getReferenceVolatile]: 0
+Splits for: [compareAndSetObject, compareAndSetObject, compareAndSetReference]: 0
+Splits for: [compareAndSetLong, compareAndSetLong]: 0
+Splits for: [getClass]: 0
+Splits for: [clone]: 0
+Splits for: [registerNatives]: 0
+Splits for: [min]: 0
+Splits for: [findSignal0]: 0
+Splits for: [handle]: 0
+Splits for: [<init>]: 0
+Splits for: [getNextThreadIdOffset]: 0
+Splits for: [next]: 0
+Splits for: [setPriority0]: 0
+Splits for: [start0]: 0
+Splits for: [notifyAll]: 0
+Splits for: [ensureClassInitialized, ensureClassInitialized0]: 0
+Splits for: [wait]: 0
+Splits for: [registerNatives]: 0
+Splits for: [ceil]: 0
+Splits for: [isArray]: 0
+Splits for: [of]: 0
+Splits for: [identityHashCode]: 0
+Splits for: [compareAndExchangeByte, compareAndExchangeByte]: 0
+Splits for: [vectorizedMismatch]: 0
+Splits for: [getLong, getLong]: 0
+Splits for: [getInt, getInt]: 0
+Splits for: [isAssignableFrom]: 0
+Splits for: [getSuperclass]: 0
+Splits for: [defineModule0]: 1
+Splits for: [<clinit>]: 0
+Guest loadKlassCount: 3339
+Guest loadKlassCacheHits: 3012
+Splits for: [addExports0]: 0
+Splits for: [addExportsToAll0]: 0
+Splits for: [staticFieldBase, staticFieldBase0]: 0
+Splits for: [staticFieldOffset, staticFieldOffset0]: 0
+Splits for: [getIntVolatile, getIntVolatile]: 0
+Splits for: [currentCarrierThread]: 0
+Splits for: [getObject, getObject, getReference]: 0
+Splits for: [putObjectVolatile, putObjectVolatile, putReferenceVolatile]: 0
+Splits for: [ensureMaterializedForStackWalk]: 0
+Splits for: [putObject, putObject, putReference]: 0
+Splits for: [setExclusiveOwnerThread]: 0
+Splits for: [clear]: 0
+Splits for: [putInt, putInt]: 0
+Splits for: [park, park]: 0
+Splits for: [allocateMemory, allocateMemory0]: 0
+Splits for: [copyMemory, copyMemory0]: 0
+Splits for: [putByte, putByte]: 0
+Splits for: [abs]: 0
+Splits for: [registerNatives, registerNatives]: 0
+Splits for: [createLong, createLong]: 0
+Splits for: [putLong, putLong]: 0
+Splits for: [getShort, getShort]: 0
+Splits for: [newArray]: 0
+Splits for: [getByte, getByte]: 0
+Splits for: [get]: 0
+Splits for: [resolve]: 0
+Splits for: [objectFieldOffset]: 0
+Splits for: [log]: 0
+Splits for: [isInterface]: 0
+MH cache hits: 29
+MH cache miss: 0
+Splits for: [shouldBeInitialized, shouldBeInitialized0]: 0
+Splits for: [isInstance]: 0
+Splits for: [staticFieldBase]: 0
+Splits for: [staticFieldOffset]: 0
+Splits for: [isHidden]: 0
+Splits for: [round]: 0
+Splits for: [putIntVolatile, putIntVolatile]: 0
+Splits for: [unpark, unpark]: 0
+Splits for: [clearCallSiteContext]: 0
+Splits for: [freeMemory, freeMemory0]: 0

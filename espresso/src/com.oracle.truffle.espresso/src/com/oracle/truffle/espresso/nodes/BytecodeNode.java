@@ -92,6 +92,7 @@ import com.oracle.truffle.espresso.classfile.descriptors.SignatureSymbols;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
 import com.oracle.truffle.espresso.classfile.perf.DebugCounter;
+import com.oracle.truffle.espresso.classfile.perf.ReifiedDebugCounter;
 import com.oracle.truffle.espresso.constantpool.Resolution;
 import com.oracle.truffle.espresso.constantpool.ResolvedDynamicConstant;
 import com.oracle.truffle.espresso.constantpool.ResolvedWithInvokerClassMethodRefConstant;
@@ -459,6 +460,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     case 'L' : {
                             CompilerAsserts.partialEvaluationConstant(methodParamTypes[i]);
                             // System.out.println(argCount + " fetch " + methodParamTypes[i] + " at " + i);
+                            ReifiedDebugCounter.incParamRefToPrimitive(this.methodParamTypes[i]);
                             switch (this.methodParamTypes[i]){
                                 case TypeHints.BYTE:
                                     setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot])); break;
@@ -790,6 +792,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         if (instOperandTypes[curBCI] != null) {
                             assert instOperandTypes[curBCI].length == 1 : "Expected exactly one operand for ALOAD";
                             CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
+                            ReifiedDebugCounter.incAloadToPrimitive(instOperandTypes[curBCI][0]);
                             switch (instOperandTypes[curBCI][0]) {
                                 case TypeHints.BYTE:
                                     putInt(frame, top, (byte) getLocalInt(frame, aloadIndex));
@@ -898,6 +901,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         if (instOperandTypes[curBCI] != null){
                             assert instOperandTypes[curBCI].length == 1 : "Expected exactly one operand for ASTORE";
                             CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
+                            ReifiedDebugCounter.incAstoreToPrimitive(instOperandTypes[curBCI][0]);
                             switch (instOperandTypes[curBCI][0]) {
                                 case TypeHints.BYTE:
                                     setLocalInt(frame, astoreIndex, (byte) popInt(frame, top - 1));
@@ -1845,6 +1849,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 if (instOperandTypes[curBCI] != null) {
                     assert instOperandTypes[curBCI].length == 1;
                     CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
+                    ReifiedDebugCounter.incAreturnToPrimitive(instOperandTypes[curBCI][0]);
                     switch (instOperandTypes[curBCI][0]) {
                         case TypeHints.BYTE: return (byte) popInt(frame, top - 1);
                         case TypeHints.CHAR: return (char) popInt(frame, top - 1);
@@ -2803,6 +2808,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             alternatedType = this.reifiedClassTypeParams[typeParamIdx];
         }
         CompilerAsserts.partialEvaluationConstant(alternatedType);
+        ReifiedDebugCounter.incPutfieldToPrimitive(typeHeader, alternatedType);
         switch (alternatedType) {
             case 'Z':
                 boolean booleanValue = stackIntToBoolean(popInt(frame, top - 1));
@@ -2969,7 +2975,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             resultAt = resultAt + 1;
         }
         CompilerAsserts.partialEvaluationConstant(alternatedType);
-        
+        ReifiedDebugCounter.incGetfieldToPrimitive(typeHeader, alternatedType);
         switch (alternatedType) {
             case 'Z' : putInt(frame, resultAt, (isVolatile ? specializedLinkedField.getBooleanVolatile(receiver) : specializedLinkedField.getBoolean(receiver)) ? 1 : 0); break;
             case 'B' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getByteVolatile(receiver) : specializedLinkedField.getByte(receiver));      break;
