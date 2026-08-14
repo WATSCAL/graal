@@ -5,6 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
+import com.oracle.truffle.espresso.classfile.perf.ReifiedDebugCounter;
 import com.oracle.truffle.espresso.impl.Method;
 import com.oracle.truffle.espresso.nodes.EspressoFrame;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
@@ -31,6 +32,7 @@ public final class InvokeArrayUpdateNode extends InvokeScalaNode {
         //System.out.println("InvokeArrayUpdateNode: array=" + array.toVerboseString() + ", index=" + index + ", newElement=" + newElement.toVerboseString() + ", reifiedType=" + reifiedType + " resultAt=" + resultAt);
         EspressoLanguage language = getLanguage();
         CompilerAsserts.partialEvaluationConstant(arrayElementType);
+        ReifiedDebugCounter.incArrayUpdateToPrimitive(arrayElementType);
         switch (arrayElementType) {
             case TypeHints.BYTE:
                 byte newByte = (byte) EspressoFrame.popInt(frame, top - 1);
