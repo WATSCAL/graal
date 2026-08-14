@@ -1347,6 +1347,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     case INVOKEINTERFACE:
                         if (this.ignoreInvoke[curBCI]) {
                             // System.out.println("ignore invoke at " + curBCI + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
+                            ReifiedDebugCounter.incExtraBoxUnboxIgnored();
                             if (this.stackTopAdjustment[curBCI] != 0) {
                                 assert this.instOperandTypes[curBCI][0] == 'J' || this.instOperandTypes[curBCI][0] == 'D';
                                 if (this.instOperandTypes[curBCI][0] == 'J') {
