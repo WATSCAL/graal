@@ -41,6 +41,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
+import com.oracle.truffle.espresso.classfile.perf.ReifiedDebugCounter;
 import com.oracle.truffle.espresso.analysis.typehints.TypeAnalysisResult;
 import com.oracle.truffle.espresso.analysis.typehints.TypeHintAnalysis;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
@@ -198,6 +199,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     private byte[] collectTraitTypeParams(StaticObject receiver) {
         byte[] key = new byte[traitTypeParamAccessors.length];
         for (int i = 0; i < traitTypeParamAccessors.length; ++i) {
+            ReifiedDebugCounter.incInterfaceAccessorCall();
             key[i] = (byte) traitTypeParamAccessors[i].invokeDirectInterface(receiver);
         }
         return key;
