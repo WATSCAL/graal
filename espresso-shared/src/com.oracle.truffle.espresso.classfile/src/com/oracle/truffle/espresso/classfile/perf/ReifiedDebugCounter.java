@@ -13,6 +13,7 @@ public class ReifiedDebugCounter {
     private static String ARRAY_APPLY_TO_PRIMITIVE = "array_apply to primitive type";
     private static String ARRAY_UPDATE_TO_PRIMITIVE = "array_update to primitive type";
     private static String EXTRA_BOX_UNBOX_IGNORED = "Extra boxing/unboxing ignored";
+    private static String INTERFACE_ACCESSOR_CALL = "Interface accessor call";
 
     private static DebugCounter PARAM_REF_TO_PRIMITIVE_COUNTER = DebugCounter.create(PARAM_REF_TO_PRIMITIVE);
     private static DebugCounter ALOAD_TO_PRIMITIVE_COUNTER = DebugCounter.create(ALOAD_TO_PRIMITIVE);
@@ -23,6 +24,7 @@ public class ReifiedDebugCounter {
     private static DebugCounter ARRAY_APPLY_TO_PRIMITIVE_COUNTER = DebugCounter.create(ARRAY_APPLY_TO_PRIMITIVE);
     private static DebugCounter ARRAY_UPDATE_TO_PRIMITIVE_COUNTER = DebugCounter.create(ARRAY_UPDATE_TO_PRIMITIVE);
     private static DebugCounter EXTRA_BOX_UNBOX_IGNORED_COUNTER = DebugCounter.create(EXTRA_BOX_UNBOX_IGNORED);
+    private static DebugCounter INTERFACE_ACCESSOR_CALL_COUNTER = DebugCounter.create(INTERFACE_ACCESSOR_CALL);
 
     ReifiedDebugCounter() {
     }
@@ -95,6 +97,10 @@ public class ReifiedDebugCounter {
         inc(EXTRA_BOX_UNBOX_IGNORED_COUNTER);
     }
 
+    public static void incInterfaceAccessorCall() {
+        inc(INTERFACE_ACCESSOR_CALL_COUNTER);
+    }
+
     public static void log(TruffleLogger logger){
         if (!DebugCounter.DebugCounters) {
             return;
@@ -108,7 +114,7 @@ public class ReifiedDebugCounter {
         logCounter(logger, ARRAY_APPLY_TO_PRIMITIVE_COUNTER, ARRAY_APPLY_TO_PRIMITIVE);
         logCounter(logger, ARRAY_UPDATE_TO_PRIMITIVE_COUNTER, ARRAY_UPDATE_TO_PRIMITIVE);
         logCounter(logger, EXTRA_BOX_UNBOX_IGNORED_COUNTER, EXTRA_BOX_UNBOX_IGNORED);
-
+        logCounter(logger, INTERFACE_ACCESSOR_CALL_COUNTER, INTERFACE_ACCESSOR_CALL);
     }
 
     private static void logCounter(TruffleLogger logger, DebugCounter counter, String message) {
