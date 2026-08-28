@@ -68,6 +68,7 @@ visualizer/C1Visualizer/*/target/
 !tests/classfiles/hint/bcGen/Arrays/*.class
 !tests/classfiles/plain/bcGen/Arrays/*.class
 !tests/classfiles/hint/bcGen/Performance/*.class
+!tests/classfiles/hint/bcGen/Spire/*.class
 !tests/classfiles/lib/
 !tests/classfiles/lib/scala/runtime/*.class
 !tests/classfiles/lib/*.jar
