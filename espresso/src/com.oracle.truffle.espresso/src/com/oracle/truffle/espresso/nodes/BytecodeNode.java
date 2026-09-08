@@ -366,6 +366,7 @@ import com.oracle.truffle.espresso.nodes.quick.interop.ReferenceArrayLoadQuickNo
 import com.oracle.truffle.espresso.nodes.quick.interop.ReferenceArrayStoreQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ShortArrayLoadQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ShortArrayStoreQuickNode;
+import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeArrayLengthNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeContinuableNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeDynamicCallSiteNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeHandleNode;
@@ -2459,6 +2460,10 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         ResolvedCall<Klass, Method, Field> resolvedCall = resolvedInvoke.resolvedCall();
         Method resolved = resolvedCall.getResolvedMethod();
         CallKind callKind = resolvedCall.getCallKind();
+
+        if (resolved.getNameAsString().equals("array_length") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")){
+            return new InvokeArrayLengthNode(resolved, top, curBCI);
+        }
 
         // Skip inlined nodes if instrumentation is live.
         // Lock must be owned for correctness.
