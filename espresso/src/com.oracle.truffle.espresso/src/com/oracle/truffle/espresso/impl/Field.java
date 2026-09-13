@@ -37,7 +37,9 @@ import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.attributes.ConstantValueAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
+import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
 import com.oracle.truffle.espresso.classfile.descriptors.ModifiedUTF8;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
@@ -102,6 +104,8 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
     public final byte genericTypeParamKind;
     public final int genericTypeParamIdx; // valid if it has generic type, otherwise -1
 
+    public final int indexAsTypeParam;
+
     public Field(ObjectKlass.KlassVersion holder, LinkedField linkedField, RuntimeConstantPool pool, boolean isStatic, int linkedFieldIdx) {
         this.linkedField = linkedField;
         this.holder = holder;
@@ -118,6 +122,20 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
             this.genericTypeParamKind = 0;
             this.genericTypeParamIdx = -1;
         }
+
+        int typeParamIndex = -1;
+        ClassTypeParamListAttribute typeParamList = holder.getKlass().getClassTypeParamListAttribute();
+        if (typeParamList != null) {
+            FieldRefConstant.Indexes[] typeParams = typeParamList.getTypeParams();
+            for (int i = 0; i < typeParams.length; i++) {
+                FieldRefConstant.Indexes typeParam = typeParams[i];
+                if (typeParam.getName(pool) == getName() && typeParam.getType(pool) == getType()) {
+                    typeParamIndex = i;
+                    break;
+                }
+            }
+        }
+        this.indexAsTypeParam = typeParamIndex >= 0 ? typeParamIndex + (holder.linkedKlass.allTypeParamNum - holder.linkedKlass.curLevelTypeParamNum) : -1;
     }
 
     public final LinkedField getSpecializedLinkedField(byte[] classTypeParams) {
