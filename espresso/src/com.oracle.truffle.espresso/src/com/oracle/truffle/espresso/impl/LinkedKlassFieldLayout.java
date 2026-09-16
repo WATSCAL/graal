@@ -26,8 +26,6 @@ import static com.oracle.truffle.espresso.classfile.Constants.ACC_FINAL;
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_HIDDEN;
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_VOLATILE;
 
-import static java.util.Map.entry;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,8 +39,8 @@ import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.classfile.JavaVersion.VersionRange;
 import com.oracle.truffle.espresso.classfile.ParserField;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
-import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
+import com.oracle.truffle.espresso.classfile.attributes.Attribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -65,37 +63,41 @@ final class LinkedKlassFieldLayout {
 
     final int fieldTableLength;
 
+
     public static final class SpecializedLayout {
         @CompilationFinal(dimensions = 1)
         final LinkedField[] instanceFields;
 
-        FieldsInfo fieldsInfo = FieldsInfo.create(parserKlass, language);
-        int nextInstanceFieldIndex = 0;
-        int nextStaticFieldIndex = 0;
-        int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
-        int nextStaticFieldSlot = 0;
+        final StaticShape<StaticObjectFactory> instanceShape;
 
-        staticFields = new LinkedField[fieldsInfo.staticFields];
-        instanceFields = new LinkedField[fieldsInfo.instanceFields];
-
-        LinkedField.IdMode idMode = getIdMode(parserKlass);
-
-        for (ParserField parserField : parserKlass.getFields()) {
-            if (parserField.isStatic()) {
-                createAndRegisterLinkedField(parserKlass, parserField, nextStaticFieldSlot++, nextStaticFieldIndex++, idMode, staticBuilder, staticFields);
-            } else {
-                createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
+        private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields,
+                                                        byte reifiedType) {
+            LinkedField field = new LinkedField(parserField, slot, idMode);
+            Class<?> fieldType;
+            switch (reifiedType) {
+                case TypeHints.BYTE: fieldType = byte.class; break;
+                case TypeHints.CHAR: fieldType = char.class; break;
+                case TypeHints.DOUBLE: fieldType = double.class; break;
+                case TypeHints.FLOAT: fieldType = float.class; break;
+                case TypeHints.INT: fieldType = int.class; break;
+                case TypeHints.LONG: fieldType = long.class; break;
+                case TypeHints.SHORT: fieldType = short.class; break;
+                case TypeHints.BOOLEAN: fieldType = boolean.class; break;
+                default: fieldType = StaticObject.class; break; //can never be hidden fields
             }
             builder.property(field, fieldType, storeAsFinal(parserKlass, parserField));
             linkedFields[index] = field;
         }
 
-        for (HiddenField hiddenField : fieldsInfo.hiddenFields) {
-            if (hiddenField.predicate.test(language)) {
-                ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, Attribute.EMPTY_ARRAY);
-                createAndRegisterLinkedField(parserKlass, hiddenParserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
-            }
+        private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields) {
+            LinkedField field = new LinkedField(parserField, slot, idMode);
+            builder.property(field, LinkedField.getPropertyType(parserField), storeAsFinal(parserKlass, parserField));
+            linkedFields[index] = field;
         }
+
+        SpecializedLayout(EspressoLanguage language, LinkedKlass currentKlass, ParserKlass parserKlass, LinkedKlass superKlass, byte[] classTypeArgs) {
+            StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
+
 
             FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
             int nextInstanceFieldIndex = 0;
@@ -130,18 +132,18 @@ final class LinkedKlassFieldLayout {
         }
     }
 
-    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) { // all generic fields are created as reference slots
+    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) {
         StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
         StaticShape.Builder staticBuilder = StaticShape.newBuilder(language);
 
-        FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
+        FieldsInfo fieldsInfo = FieldsInfo.create(parserKlass, language);
         int nextInstanceFieldIndex = 0;
         int nextStaticFieldIndex = 0;
         int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
         int nextStaticFieldSlot = 0;
 
-        staticFields = new LinkedField[fieldCounter.staticFields];
-        instanceFields = new LinkedField[fieldCounter.instanceFields];
+        staticFields = new LinkedField[fieldsInfo.staticFields];
+        instanceFields = new LinkedField[fieldsInfo.instanceFields];
 
         LinkedField.IdMode idMode = getIdMode(parserKlass);
 
@@ -153,9 +155,9 @@ final class LinkedKlassFieldLayout {
             }
         }
 
-        for (HiddenField hiddenField : fieldCounter.hiddenFieldNames) {
+        for (HiddenField hiddenField : fieldsInfo.hiddenFields) {
             if (hiddenField.predicate.test(language)) {
-                ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, null);
+                ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, Attribute.EMPTY_ARRAY);
                 createAndRegisterLinkedField(parserKlass, hiddenParserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
             }
         }
