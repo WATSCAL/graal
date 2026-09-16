@@ -113,7 +113,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
                         : null;
         int classTypeParamCountForMethod = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
 
-        if (classTypeParamCountForMethod > 0 || this.analysis != null) {
+        if (methodTypeParamCount > 0 || classTypeParamCountForMethod > 0 || this.analysis != null) {
             this.bytecodeNode = null;
             this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
             this.classTypeParamCount = classTypeParamCountForMethod;
