@@ -16,7 +16,7 @@ public class ExtraBoxUnboxAttribute extends Attribute {
     private final AbstractSet<Integer> bcOffsets;
 
     public ExtraBoxUnboxAttribute(Symbol<Name> name, int[] bcOffsets) {
-        super(name, null);
+        assert name == NAME;
         this.bcOffsets = new HashSet<>();
         for (int v : bcOffsets) {
             this.bcOffsets.add(v);
@@ -25,6 +25,11 @@ public class ExtraBoxUnboxAttribute extends Attribute {
 
     public AbstractSet<Integer> getBCOffsets() {
         return this.bcOffsets;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     @Override

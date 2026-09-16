@@ -13,8 +13,13 @@ public class FieldTypeAttribute extends Attribute{
     public final TypeHints.TypeB hint;
 
     public FieldTypeAttribute(Symbol<Name> name, TypeHints.TypeB hint) {
-        super(name, null);
+        assert name == NAME;
         this.hint = hint;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     @Override

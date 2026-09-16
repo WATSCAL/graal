@@ -110,22 +110,11 @@ public final class LinkedKlass {
         this.hasFinalizer = ((parserKlass.getFlags() & ACC_FINALIZER) != 0) || (superKlass != null && (superKlass.getFlags() & ACC_FINALIZER) != 0);
         assert !this.hasFinalizer || !Types.java_lang_Object.equals(parserKlass.getType()) : "java.lang.Object cannot be marked as finalizable";
 
-        final int methodCount = parserKlass.getMethods().length;
-        LinkedMethod[] linkedMethods = new LinkedMethod[methodCount];
-
-        for (int i = 0; i < methodCount; ++i) {
-            ParserMethod parserMethod = parserKlass.getMethods()[i];
-            // TODO(peterssen): Methods with custom constant pool should spawned here, but not
-            // supported.
-            linkedMethods[i] = new LinkedMethod(parserMethod);
-        }
-        this.methods = linkedMethods;
-
         ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
         TraitTypeParamListAttribute traitTypeParamList = (TraitTypeParamListAttribute) this.parserKlass.getAttribute(TraitTypeParamListAttribute.NAME);
         this.curLevelTypeParamNum = Modifier.isInterface(getFlags()) ?
-                                        (traitTypeParamList != null ? traitTypeParamList.getTypeParamAccessorMethodRefs().length : 0) :
-                                        (typeParamList != null ? typeParamList.getTypeParams().length : 0);
+                                        (traitTypeParamList != null ? traitTypeParamList.getTypeParamAccessorMethodRefCpis().length : 0) :
+                                        (typeParamList != null ? typeParamList.getTypeParamFieldRefCpis().length : 0);
         this.allTypeParamNum = superKlass != null ? superKlass.allTypeParamNum + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
 
         this.specializedKeys = EMPTY_BYTE_KEY;

@@ -1,7 +1,6 @@
 package com.oracle.truffle.espresso.classfile.attributes.reified;
 
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
-import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.ParserSymbols.ParserNames;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
@@ -9,15 +8,20 @@ import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 public class ClassTypeParamListAttribute extends Attribute {
     public static final Symbol<Name> NAME = ParserNames.ClassTypeParamList;
 
-    private final FieldRefConstant.Indexes[] typeParams;
+    private final int[] typeParamFieldRefCpis;
 
-    public FieldRefConstant.Indexes[] getTypeParams() {
-        return typeParams;
+    public int[] getTypeParamFieldRefCpis() {
+        return typeParamFieldRefCpis;
     }
 
-    public ClassTypeParamListAttribute(Symbol<Name> name, FieldRefConstant.Indexes[] typeParams) {
-        super(name, null);
-        this.typeParams = typeParams;
+    public ClassTypeParamListAttribute(Symbol<Name> name, int[] typeParamFieldRefCpis) {
+        assert name == NAME;
+        this.typeParamFieldRefCpis = typeParamFieldRefCpis;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     @Override

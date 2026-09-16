@@ -19,8 +19,13 @@ public class InvokeReturnTypeAttribute extends Attribute {
     }
 
     public InvokeReturnTypeAttribute(Symbol<Name> name, Entry[] entries) {
-        super(name, null);
+        assert name == NAME;
         this.entries = entries;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     @Override

@@ -1,4 +1,6 @@
-package com.oracle.truffle.espresso.classfile.perf;
+package com.oracle.truffle.espresso.perf;
+
+import com.oracle.truffle.espresso.classfile.perf.DebugCounter;
 
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;

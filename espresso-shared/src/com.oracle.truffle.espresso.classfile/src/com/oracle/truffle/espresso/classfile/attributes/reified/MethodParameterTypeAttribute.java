@@ -15,8 +15,13 @@ public class MethodParameterTypeAttribute extends Attribute{
         return parameterTypes;
     }
     public MethodParameterTypeAttribute(Symbol<Name> name, TypeHints.TypeB[] parameterTypes) {
-        super(name, null);
+        assert name == NAME;
         this.parameterTypes = parameterTypes;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     @Override

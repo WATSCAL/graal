@@ -55,7 +55,6 @@ import com.oracle.truffle.espresso.classfile.attributes.ConstantValueAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.SignatureAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
-import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
 import com.oracle.truffle.espresso.classfile.descriptors.ModifiedUTF8;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
@@ -146,10 +145,10 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
         int typeParamIndex = -1;
         ClassTypeParamListAttribute typeParamList = holder.getKlass().getClassTypeParamListAttribute();
         if (typeParamList != null) {
-            FieldRefConstant.Indexes[] typeParams = typeParamList.getTypeParams();
-            for (int i = 0; i < typeParams.length; i++) {
-                FieldRefConstant.Indexes typeParam = typeParams[i];
-                if (typeParam.getName(pool) == getName() && typeParam.getType(pool) == getType()) {
+            int[] typeParamFieldRefCpis = typeParamList.getTypeParamFieldRefCpis();
+            for (int i = 0; i < typeParamFieldRefCpis.length; i++) {
+                int typeParamFieldRefCpi = typeParamFieldRefCpis[i];
+                if (pool.fieldName(typeParamFieldRefCpi) == getName() && pool.fieldType(typeParamFieldRefCpi) == getType()) {
                     typeParamIndex = i;
                     break;
                 }
@@ -274,7 +273,7 @@ public class Field extends Member<Type> implements FieldRef, TruffleObject, Fiel
     }
 
     public final Attribute getAttribute(Symbol<Name> attrName) {
-        return linkedField.getAttribute(attrName);
+        return linkedField.getParserField().getAttribute(attrName);
     }
 
     public final FieldTypeAttribute getFieldTypeAttribute() {

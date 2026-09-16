@@ -40,13 +40,9 @@ import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.INVOKEVIR
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTFIELD;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.PUTSTATIC;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SWAP;
-import com.oracle.truffle.espresso.classfile.constantpool.InvokeDynamicConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodRefConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.Resolvable;
 import com.oracle.truffle.espresso.classfile.descriptors.SignatureSymbols;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
-import com.oracle.truffle.espresso.constantpool.Resolution;
 import com.oracle.truffle.espresso.constantpool.RuntimeConstantPool;
 import com.oracle.truffle.espresso.impl.Field;
 import com.oracle.truffle.espresso.impl.Klass;
@@ -248,15 +244,8 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                         */
                         cpi = bs.readCPI(bci);
                         //following the logic in BytecodeNode getResolvedInvoke
-                        MethodRefConstant methodRefConstant =
-                            getConstantPool().resolvedMethodRefAt(
-                                getDeclaringKlass(), cpi);
-                        Method resolutionSeed = (Method) ((Resolvable.ResolvedConstant) methodRefConstant).value();
-                        Klass symbolicRef = Resolution.getResolvedHolderKlass(
-                            getConstantPool().methodAt(cpi), 
-                            getConstantPool(),
-                            getDeclaringKlass()
-                        );
+                        Method resolutionSeed = getConstantPool().resolvedMethodAt(getDeclaringKlass(), cpi);
+                        Klass symbolicRef = getConstantPool().getResolvedHolderKlass(cpi, getDeclaringKlass());
                         CallSiteType callSiteType = SiteTypes.callSiteFromOpCode(opcode);
                         ResolvedCall<Klass, Method, Field> resolvedCall = 
                             EspressoLinkResolver.resolveCallSiteOrThrow(ctx, getDeclaringKlass(), resolutionSeed, callSiteType, symbolicRef);
@@ -377,8 +366,7 @@ public class TypePropagationClosure extends BlockIteratorClosure{
                 case INVOKEDYNAMIC:
                     {
                         int cpIdx = bs.readCPI(bci);
-                        InvokeDynamicConstant.Indexes info = (InvokeDynamicConstant.Indexes) methodVersion.getPool().at(cpIdx);
-                        Symbol<Type>[] signature = methodVersion.getMethod().getSignatures().parsed(info.getSignature(methodVersion.getPool()));
+                        Symbol<Type>[] signature = methodVersion.getMethod().getSignatures().parsed(methodVersion.getPool().invokeDynamicSignature(cpIdx));
                         for (int i = SignatureSymbols.parameterCount(signature) - 1; i >= 0; i--){
                             Symbol<Type> cur = SignatureSymbols.parameterType(signature, i);
                             if (cur.byteAt(0) == 'J' || cur.byteAt(0) == 'D') {

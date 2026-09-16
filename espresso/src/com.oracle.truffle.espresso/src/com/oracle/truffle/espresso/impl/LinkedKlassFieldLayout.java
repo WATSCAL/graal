@@ -99,10 +99,10 @@ final class LinkedKlassFieldLayout {
             StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
 
 
-            FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
+            FieldsInfo fieldsInfo = FieldsInfo.create(parserKlass, language);
             int nextInstanceFieldIndex = 0;
             int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
-            instanceFields = new LinkedField[fieldCounter.instanceFields];
+            instanceFields = new LinkedField[fieldsInfo.instanceFields];
 
             LinkedField.IdMode idMode = LinkedKlassFieldLayout.getIdMode(parserKlass);
 
@@ -117,7 +117,7 @@ final class LinkedKlassFieldLayout {
                 }
             }
 
-            for (HiddenField hiddenField : fieldCounter.hiddenFieldNames) {
+            for (HiddenField hiddenField : fieldsInfo.hiddenFields) {
                 if (hiddenField.predicate.test(language)) {
                     ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, null);
                     createAndRegisterLinkedField(parserKlass, hiddenParserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);

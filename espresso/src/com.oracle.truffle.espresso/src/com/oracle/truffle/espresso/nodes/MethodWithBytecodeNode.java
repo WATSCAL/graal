@@ -41,7 +41,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
-import com.oracle.truffle.espresso.classfile.perf.ReifiedDebugCounter;
+import com.oracle.truffle.espresso.perf.ReifiedDebugCounter;
 import com.oracle.truffle.espresso.analysis.typehints.TypeAnalysisResult;
 import com.oracle.truffle.espresso.analysis.typehints.TypeHintAnalysis;
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;

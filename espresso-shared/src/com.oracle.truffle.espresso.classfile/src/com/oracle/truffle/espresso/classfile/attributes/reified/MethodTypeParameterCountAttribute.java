@@ -12,8 +12,13 @@ public class MethodTypeParameterCountAttribute extends Attribute {
     private final int count;
 
     public MethodTypeParameterCountAttribute(Symbol<Name> name, int count) {
-        super(name, null);
+        assert name == NAME;
         this.count = count;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     public int getCount() {

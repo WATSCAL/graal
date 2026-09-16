@@ -14,8 +14,13 @@ public class BCNewTypeArgsAttribute extends Attribute {
     private final Entry[] entries;
 
     public BCNewTypeArgsAttribute(Symbol<Name> name, Entry[] entries) {
-        super(name, null);
+        assert name == NAME;
         this.entries = entries;
+    }
+
+    @Override
+    public Symbol<Name> getName() {
+        return NAME;
     }
 
     public Entry[] getEntires() {

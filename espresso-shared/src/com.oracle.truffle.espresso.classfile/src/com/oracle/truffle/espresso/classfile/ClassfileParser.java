@@ -107,24 +107,6 @@ import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterT
 import com.oracle.truffle.espresso.classfile.attributes.reified.MethodTypeParameterCountAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
-import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.ClassMethodRefConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.DoubleConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.DynamicConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.FieldRefConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.FloatConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.ImmutablePoolConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.IntegerConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.InterfaceMethodRefConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.InvalidConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.InvokeDynamicConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.LongConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodHandleConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodTypeConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.NameAndTypeConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.PoolConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.StringConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.Utf8Constant;
 import com.oracle.truffle.espresso.classfile.descriptors.ByteSequence;
 import com.oracle.truffle.espresso.classfile.descriptors.ModifiedUTF8;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
@@ -1438,11 +1420,13 @@ public final class ClassfileParser {
     private ClassTypeParamListAttribute parseClassTypeParamList(Symbol<Name> name) {
         assert ParserNames.ClassTypeParamList.equals(name);
         int num = stream.readU2();
-        FieldRefConstant.Indexes[] fieldRefs = new FieldRefConstant.Indexes[num];
+        int[] fieldRefCpis = new int[num];
         for (int i = 0; i < num; ++i) {
-            fieldRefs[i] = pool.fieldAt(stream.readU2());
+            int fieldRefCpi = stream.readU2();
+            pool.fieldName(fieldRefCpi);
+            fieldRefCpis[i] = fieldRefCpi;
         }
-        return new ClassTypeParamListAttribute(name, fieldRefs);
+        return new ClassTypeParamListAttribute(name, fieldRefCpis);
     }
 
     /*
@@ -1457,13 +1441,12 @@ public final class ClassfileParser {
         assert ParserNames.TraitTypeParamList.equals(name);
         int num = stream.readU2();
         int[] methodRefCpis = new int[num];
-        InterfaceMethodRefConstant.Indexes[] methodRefs = new InterfaceMethodRefConstant.Indexes[num];
         for (int i = 0; i < num; ++i) {
             int methodRefCpi = stream.readU2();
             methodRefCpis[i] = methodRefCpi;
-            methodRefs[i] = pool.interfaceMethodAt(methodRefCpi);
+            pool.methodName(methodRefCpi);
         }
-        return new TraitTypeParamListAttribute(name, methodRefCpis, methodRefs);
+        return new TraitTypeParamListAttribute(name, methodRefCpis);
     }
 
     /*
