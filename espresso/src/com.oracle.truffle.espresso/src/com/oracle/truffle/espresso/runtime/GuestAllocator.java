@@ -127,7 +127,9 @@ public final class GuestAllocator implements LanguageAccess {
         klass.safeInitialize();
         LinkedKlass lkKlass = klass.getLinkedKlass();
         int specializationIdx = lkKlass.getSpecializationIndex(this.language, classTypeArgs);
+        CompilerAsserts.partialEvaluationConstant(specializationIdx);
         StaticShape<StaticObject.StaticObjectFactory> reifiedShape = lkKlass.getSpecializedShapeAt(specializationIdx);
+        CompilerAsserts.partialEvaluationConstant(reifiedShape);
         byte[] reifiedTypes = lkKlass.getSpecializedKeyAt(specializationIdx);
         StaticObject newSpecializedObj = reifiedShape.getFactory().create(klass, false, reifiedTypes);
         initInstanceFields(newSpecializedObj, klass);

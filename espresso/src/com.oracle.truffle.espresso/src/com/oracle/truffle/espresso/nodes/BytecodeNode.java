@@ -560,6 +560,8 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     private final int[] stackTopAdjustment;
     @CompilationFinal(dimensions = 2)
     private final int[][] allocTypeArgSlotIndices;
+    @CompilationFinal(dimensions = 2)
+    private final byte[][] resolvedAllocTypeArgs;
 
     private final int methodTypeParamStartIndex; // index in parameter list, not argument array
 
@@ -644,6 +646,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         }
 
         this.allocTypeArgSlotIndices = new int[this.bs.endBCI()][];
+        this.resolvedAllocTypeArgs = new byte[this.bs.endBCI()][];
         BCNewTypeArgsAttribute allocTypeArgsAttr = method.getBCNewTypeArgsAttribute();
         if (allocTypeArgsAttr != null) {
             for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
@@ -2031,6 +2034,20 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
+    private byte[] getAllocTypeArgs(VirtualFrame frame, int curBCI) {
+        if (resolvedAllocTypeArgs[curBCI] != null) {
+            return resolvedAllocTypeArgs[curBCI];
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        int len = this.allocTypeArgSlotIndices[curBCI].length;
+        byte[] allocTypeArgs = new byte[len];
+        for (int i = 0; i < len; ++i) {
+            allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
+        }
+        resolvedAllocTypeArgs[curBCI] = allocTypeArgs;
+        return allocTypeArgs;
+    }
+
     @ExplodeLoop
     private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
@@ -2039,12 +2056,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (objKlass.getLinkedKlass().allTypeParamNum > 0) {
             assert this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length == objKlass.getLinkedKlass().allTypeParamNum;
             //System.out.println("Creating specialized object");
-            int len = this.allocTypeArgSlotIndices[curBCI].length;
-            byte[] allocTypeArgs = new byte[len];
-            for (int i = 0; i < len; ++i) {
-                allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
-            }
-            return getAllocator().createNewSpecialized(objKlass, allocTypeArgs);
+            return getAllocator().createNewSpecialized(objKlass, getAllocTypeArgs(frame, curBCI));
         } else {
             return getAllocator().createNew(objKlass);
         }
