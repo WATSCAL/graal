@@ -215,11 +215,13 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
 
     private byte[] collectTraitTypeParams(StaticObject receiver) {
         byte[] key = new byte[traitTypeParamAccessors.length];
-        for (int i = 0; i < traitTypeParamAccessors.length; ++i) {
-            ReifiedDebugCounter.incInterfaceAccessorCall();
-            key[i] = (byte) traitTypeParamAccessors[i].invokeDirectInterface(receiver);
-        }
-        return key;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw EspressoError.shouldNotReachHere();
+        // for (int i = 0; i < traitTypeParamAccessors.length; ++i) {
+        //     ReifiedDebugCounter.incInterfaceAccessorCall();
+        //     key[i] = (byte) traitTypeParamAccessors[i].invokeDirectInterface(receiver);
+        // }
+        // return key;
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
