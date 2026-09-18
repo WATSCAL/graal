@@ -23,6 +23,8 @@
 package com.oracle.truffle.espresso.nodes;
 
 import java.util.Arrays;
+import java.lang.reflect.Field;
+import sun.misc.Unsafe;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -63,6 +65,21 @@ import com.oracle.truffle.espresso.meta.EspressoError;
  */
 @ExportLibrary(NodeLibrary.class)
 final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
+    private static final Unsafe U;
+
+    static {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            U = (Unsafe) f.get(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final long BYTE_BASE = U.arrayBaseOffset(byte[].class);
+    private static final long BYTE_SCALE = U.arrayIndexScale(byte[].class);
+
     static private final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     @Child AbstractInstrumentableBytecodeNode bytecodeNode;
@@ -213,7 +230,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             }
         }
         for (int i = 0; i < classTypeParamCount; ++i) {
-            if (cacheKeys[idx][methodTypeParamCount + i] != classTypeParams[i]) {
+            if (cacheKeys[idx][methodTypeParamCount + i] != U.getByte(classTypeParams, BYTE_BASE + (long) i * BYTE_SCALE)) {
                 return false;
             }
         }
