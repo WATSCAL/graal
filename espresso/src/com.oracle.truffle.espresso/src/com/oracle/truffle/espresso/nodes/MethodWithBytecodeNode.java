@@ -194,6 +194,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         return newNode.execute(frame);
     }
 
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
     private byte[] collectMethodTypeParams(Object[] args) {
         if (methodTypeParamCount == 0) {
             return EMPTY_BYTE_ARRAY;
@@ -213,6 +214,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         return receiver.classTypeParams;
     }
 
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
     private byte[] collectTraitTypeParams(StaticObject receiver) {
         byte[] key = new byte[traitTypeParamAccessors.length];
         CompilerDirectives.transferToInterpreterAndInvalidate();
