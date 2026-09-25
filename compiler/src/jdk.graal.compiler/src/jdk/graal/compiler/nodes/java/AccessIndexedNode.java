@@ -45,12 +45,6 @@ import jdk.vm.ci.meta.JavaKind;
 public abstract class AccessIndexedNode extends AccessArrayNode implements Lowerable, MemoryAccess {
 
     public static final NodeClass<AccessIndexedNode> TYPE = NodeClass.create(AccessIndexedNode.class);
-    /**
-     * The contents of the array stored in {@code StaticObject.classTypeParams} are immutable.
-     * Keep this identity separate from normal byte-array locations so stores to ordinary arrays do
-     * not kill these reads.
-     */
-    public static final LocationIdentity CLASS_TYPE_PARAMS_ARRAY_LOCATION = NamedLocationIdentity.immutable("StaticObject.classTypeParams[]");
     @Input protected ValueNode index;
     @OptionalInput(InputType.Guard) private GuardingNode boundsCheck;
     protected final JavaKind elementKind;
@@ -75,8 +69,8 @@ public abstract class AccessIndexedNode extends AccessArrayNode implements Lower
         this.index = index;
         this.boundsCheck = boundsCheck;
         this.elementKind = elementKind;
-        this.location = array instanceof LoadFieldNode && LoadFieldNode.isClassTypeParamsField(((LoadFieldNode) array).field())
-                        ? CLASS_TYPE_PARAMS_ARRAY_LOCATION
+        this.location = LoadFieldNode.isClassTypeParamsArray(array)
+                        ? LoadFieldNode.CLASS_TYPE_PARAMS_ARRAY_LOCATION
                         : NamedLocationIdentity.getArrayLocation(elementKind);
     }
 

@@ -41,6 +41,7 @@ import jdk.graal.compiler.nodes.virtual.VirtualObjectNode;
 import jdk.graal.compiler.nodes.ConstantNode;
 import jdk.graal.compiler.nodes.DeoptimizeNode;
 import jdk.graal.compiler.nodes.FixedGuardNode;
+import jdk.graal.compiler.nodes.NamedLocationIdentity;
 import jdk.graal.compiler.nodes.NodeView;
 import jdk.graal.compiler.nodes.PhiNode;
 import jdk.graal.compiler.nodes.ValueNode;
@@ -74,6 +75,8 @@ import jdk.vm.ci.meta.ResolvedJavaField;
 public final class LoadFieldNode extends AccessFieldNode implements Canonicalizable.Unary<ValueNode>, Virtualizable, UncheckedInterfaceProvider, SingleMemoryKill {
 
     public static final NodeClass<LoadFieldNode> TYPE = NodeClass.create(LoadFieldNode.class);
+    /** Location identity for contents of arrays stored in {@code StaticObject.classTypeParams}. */
+    public static final LocationIdentity CLASS_TYPE_PARAMS_ARRAY_LOCATION = NamedLocationIdentity.immutable("StaticObject.classTypeParams[]");
 
     private final Stamp uncheckedStamp;
 
@@ -92,8 +95,12 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
      * memory kills. The check intentionally uses the binary class name: the compiler module must
      * not depend on Espresso classes.
      */
-    static boolean isClassTypeParamsField(ResolvedJavaField field) {
+    public static boolean isClassTypeParamsField(ResolvedJavaField field) {
         return field.getName().equals("classTypeParams") && field.getDeclaringClass().getName().contains("StaticObject");
+    }
+
+    public static boolean isClassTypeParamsArray(ValueNode value) {
+        return value instanceof LoadFieldNode && isClassTypeParamsField(((LoadFieldNode) value).field());
     }
 
     public static LoadFieldNode create(Assumptions assumptions, ValueNode object, ResolvedJavaField field) {

@@ -45,6 +45,7 @@ import jdk.graal.compiler.nodes.spi.Canonicalizable;
 import jdk.graal.compiler.nodes.spi.CanonicalizerTool;
 import jdk.graal.compiler.nodes.spi.TrackedUnsafeAccess;
 import jdk.graal.compiler.nodes.type.StampTool;
+import jdk.graal.compiler.nodes.java.LoadFieldNode;
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaField;
@@ -141,7 +142,9 @@ public abstract class UnsafeAccessNode extends FixedWithNextNode implements Cano
                      * This code might assign a wrong location identity in case the offset is
                      * outside of the body of the array. This seems to be benign.
                      */
-                    LocationIdentity identity = NamedLocationIdentity.getArrayLocation(receiverType.getComponentType().getJavaKind());
+                    LocationIdentity identity = LoadFieldNode.isClassTypeParamsArray(object())
+                                    ? LoadFieldNode.CLASS_TYPE_PARAMS_ARRAY_LOCATION
+                                    : NamedLocationIdentity.getArrayLocation(receiverType.getComponentType().getJavaKind());
                     assert graph().isBeforeStage(StageFlag.FLOATING_READS) : "cannot add more precise memory location after floating read phase";
                     return cloneAsArrayAccess(offset(), identity, getMemoryOrder());
                 }

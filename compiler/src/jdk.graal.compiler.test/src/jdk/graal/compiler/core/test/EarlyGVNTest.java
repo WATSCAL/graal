@@ -53,6 +53,7 @@ import jdk.graal.compiler.nodes.java.ArrayLengthNode;
 import jdk.graal.compiler.nodes.java.LoadFieldNode;
 import jdk.graal.compiler.nodes.java.LoadIndexedNode;
 import jdk.graal.compiler.nodes.java.StoreFieldNode;
+import jdk.graal.compiler.nodes.extended.RawLoadNode;
 import jdk.graal.compiler.nodes.loop.Loop;
 import jdk.graal.compiler.nodes.loop.LoopsData;
 import jdk.graal.compiler.options.OptionValues;
@@ -63,6 +64,7 @@ import jdk.graal.compiler.phases.common.ConditionalEliminationPhase;
 import jdk.graal.compiler.phases.common.DominatorBasedGlobalValueNumberingPhase;
 import jdk.graal.compiler.phases.tiers.HighTierContext;
 import jdk.graal.compiler.phases.tiers.Suites;
+import jdk.internal.misc.Unsafe;
 
 public class EarlyGVNTest extends GraalCompilerTest {
 
@@ -186,9 +188,23 @@ public class EarlyGVNTest extends GraalCompilerTest {
         return first + second;
     }
 
+    public static int classTypeParamsRawLoads(StaticObject object, byte[] unrelated, int index) {
+        byte[] firstParams = object.classTypeParams;
+        int first = UNSAFE.getByte(firstParams, Unsafe.ARRAY_BYTE_BASE_OFFSET + index);
+        unrelated[0] = 42;
+        byte[] secondParams = object.classTypeParams;
+        int second = UNSAFE.getByte(secondParams, Unsafe.ARRAY_BYTE_BASE_OFFSET + index);
+        return first + second;
+    }
+
     @Test
     public void testClassTypeParamsLoads() {
         checkHighTierGraph("classTypeParamsLoads", count(LoadFieldNode.TYPE, 1), count(LoadIndexedNode.TYPE, 1));
+    }
+
+    @Test
+    public void testClassTypeParamsRawLoads() {
+        checkHighTierGraph("classTypeParamsRawLoads", count(LoadFieldNode.TYPE, 1), count(RawLoadNode.TYPE, 1));
     }
 
     @Test
