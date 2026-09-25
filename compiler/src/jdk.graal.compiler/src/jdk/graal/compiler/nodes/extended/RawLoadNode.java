@@ -78,7 +78,8 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
     }
 
     public RawLoadNode(ValueNode object, ValueNode offset, JavaKind accessKind, LocationIdentity locationIdentity, boolean forceLocation, MemoryOrderMode memoryOrder) {
-        super(TYPE, StampFactory.forKind(accessKind.getStackKind()), object, offset, accessKind, locationIdentity, forceLocation, memoryOrder);
+        super(TYPE, StampFactory.forKind(accessKind.getStackKind()), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
+                        memoryOrder);
     }
 
     /**
@@ -86,7 +87,7 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
      * {@link NodeIntrinsic} annotated method.
      */
     public RawLoadNode(@InjectedNodeParameter Stamp stamp, ValueNode object, ValueNode offset, LocationIdentity locationIdentity, JavaKind accessKind) {
-        super(TYPE, stamp, object, offset, accessKind, locationIdentity, false, MemoryOrderMode.PLAIN);
+        super(TYPE, stamp, object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), false, MemoryOrderMode.PLAIN);
     }
 
     static Stamp computeStampForArrayAccess(ValueNode object, JavaKind accessKind, Stamp oldStamp) {
@@ -117,7 +118,12 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
 
     protected RawLoadNode(NodeClass<? extends RawLoadNode> c, ValueNode object, ValueNode offset, JavaKind accessKind, LocationIdentity locationIdentity, boolean forceLocation,
                     MemoryOrderMode memoryOrder) {
-        super(c, computeStampForArrayAccess(object, accessKind, null), object, offset, accessKind, locationIdentity, forceLocation, memoryOrder);
+        super(c, computeStampForArrayAccess(object, accessKind, null), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
+                        memoryOrder);
+    }
+
+    private static LocationIdentity classTypeParamsLocation(ValueNode object, LocationIdentity locationIdentity) {
+        return LoadFieldNode.isClassTypeParamsArray(object) ? LoadFieldNode.CLASS_TYPE_PARAMS_ARRAY_LOCATION : locationIdentity;
     }
 
     @Override
