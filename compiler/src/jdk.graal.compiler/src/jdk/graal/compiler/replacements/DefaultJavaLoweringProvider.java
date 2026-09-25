@@ -568,7 +568,7 @@ public abstract class DefaultJavaLoweringProvider implements LoweringProvider {
         ValueNode positiveIndex = createPositiveIndex(graph, index, boundsCheck);
         AddressNode address = createArrayAddress(graph, array, arrayBaseOffset, elementKind, positiveIndex);
 
-        LocationIdentity arrayLocation = NamedLocationIdentity.getArrayLocation(elementKind);
+        LocationIdentity arrayLocation = loadIndexed.getLocationIdentity();
         ReadNode memoryRead = graph.add(new ReadNode(address, arrayLocation, loadStamp, barrierSet.readBarrierType(arrayLocation, address, loadStamp), MemoryOrderMode.PLAIN));
         memoryRead.setGuard(boundsCheck);
         ValueNode readValue = implicitLoadConvert(graph, elementKind, memoryRead);

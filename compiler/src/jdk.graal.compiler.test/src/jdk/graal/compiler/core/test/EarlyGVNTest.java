@@ -125,6 +125,14 @@ public class EarlyGVNTest extends GraalCompilerTest {
         }
     }
 
+    static class StaticObject {
+        final byte[] classTypeParams;
+
+        StaticObject(byte[] classTypeParams) {
+            this.classTypeParams = classTypeParams;
+        }
+    }
+
     private void checkHighTierGraph(String snippet, NodeCount... counts) {
         StructuredGraph graph = parseEager(snippet, AllowAssumptions.YES);
         Suites suites = super.createSuites(new OptionValues(getInitialOptions(), GraalOptions.LoopPeeling, false));
@@ -167,6 +175,20 @@ public class EarlyGVNTest extends GraalCompilerTest {
         int i = arr.length;
         int i2 = arr.length;
         return i + i2;
+    }
+
+    public static int classTypeParamsLoads(StaticObject object, byte[] unrelated, int index) {
+        byte[] firstParams = object.classTypeParams;
+        int first = firstParams[index];
+        unrelated[0] = 42;
+        byte[] secondParams = object.classTypeParams;
+        int second = secondParams[index];
+        return first + second;
+    }
+
+    @Test
+    public void testClassTypeParamsLoads() {
+        checkHighTierGraph("classTypeParamsLoads", count(LoadFieldNode.TYPE, 1), count(LoadIndexedNode.TYPE, 1));
     }
 
     @Test
