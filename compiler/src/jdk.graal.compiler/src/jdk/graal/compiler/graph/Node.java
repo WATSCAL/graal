@@ -385,7 +385,7 @@ public abstract class Node implements Cloneable, Formattable {
      * {@code this.graph() != NULL && this.isAlive()}. The value returned by this method can change
      * after the graph is {@linkplain Graph#maybeCompress() compressed}.
      */
-    final int id() {
+    public final int id() {
         return id;
     }
 
