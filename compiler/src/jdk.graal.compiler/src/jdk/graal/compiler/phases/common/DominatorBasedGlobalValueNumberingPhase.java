@@ -73,6 +73,7 @@ import jdk.graal.compiler.phases.common.util.LoopUtility;
 import jdk.graal.compiler.phases.util.GraphOrder;
 import jdk.graal.compiler.nodes.extended.RawLoadNode;
 import jdk.graal.compiler.nodes.NodeView;
+import jdk.graal.compiler.nodes.java.LoadFieldNode;
 
 /**
  * Optimization phase that performs global value numbering and loop invariant code motion on a
@@ -529,10 +530,8 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
             for (int i = 0; i < length; i++) {
                 Node entry = entries[i];
                 if (entry != null) {
-                    if (entry instanceof RawLoadNode && n instanceof RawLoadNode) {
-                        RawLoadNode a = (RawLoadNode) entry;
-                        RawLoadNode b = (RawLoadNode) n;
-                        n.graph().getDebug().log(DebugContext.VERY_DETAILED_LEVEL,
+                    if (entry instanceof RawLoadNode a && n instanceof RawLoadNode b && a.object() == b.object() && LoadFieldNode.isClassTypeParamsArray(a.object()) {
+                        System.err.println(
                                         "Raw GVN: a=%s b=%s data=%s inputs=%s"
                                         + " a[loc=%s force=%s order=%s kind=%s stamp=%s]"
                                         + " b[loc=%s force=%s order=%s kind=%s stamp=%s]"
