@@ -80,8 +80,8 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
     public RawLoadNode(ValueNode object, ValueNode offset, JavaKind accessKind, LocationIdentity locationIdentity, boolean forceLocation, MemoryOrderMode memoryOrder) {
         super(TYPE, StampFactory.forKind(accessKind.getStackKind()), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
                         memoryOrder);
-        if (locationIdentity == LoadFieldNode.CLASS_TYPE_PARAMS_ARRAY_LOCATION) {
-            System.err.println(toString() + " is constructed to have " + locationIdentity);
+        if (this.id() == 14868) {
+            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
         }
     }
 
@@ -91,8 +91,8 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
      */
     public RawLoadNode(@InjectedNodeParameter Stamp stamp, ValueNode object, ValueNode offset, LocationIdentity locationIdentity, JavaKind accessKind) {
         super(TYPE, stamp, object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), false, MemoryOrderMode.PLAIN);
-        if (locationIdentity == LoadFieldNode.CLASS_TYPE_PARAMS_ARRAY_LOCATION) {
-            System.err.println(toString() + " is constructed to have " + locationIdentity);
+        if (this.id() == 14868) {
+            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
         }
     }
 
