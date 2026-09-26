@@ -317,6 +317,13 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
                 killLoopLocations(((HIRLoop) cfg.blockFor(exitedLoop).getLoop()).getKillLocations(), blockMap);
             }
 
+            if (cur instanceof RawLoadNode raw) {
+                System.err.println(
+                                "processNode:\n"
+                                + raw + " " + MemoryKill.isMemoryKill(raw) + " " + canGVN(raw)
+                                + raw.getLocationIdentity() + " " + raw.getMemoryOrder() + " " + raw.isLocationForced());
+            }
+
             if (MemoryKill.isMemoryKill(cur)) {
                 blockMap.killValuesByPotentialMemoryKill(cur);
                 return;
@@ -534,7 +541,7 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
                         System.err.println(
                                         "Match:\n"
                                         + a + " on " + a.object() + "\n"
-					+ b + " on " + b.object() + "\n"
+					                    + b + " on " + b.object() + "\n"
                                         + a.getNodeClass().dataEquals(a, b) + a.getNodeClass().equalInputs(a, b) + "\n"
                                         + a.getLocationIdentity() + "\n" + a.isLocationForced() + "\n" + a.getMemoryOrder() + "\n" + a.accessKind() + "\n" + a.stamp(NodeView.DEFAULT) + "\n"
                                         + b.getLocationIdentity() + "\n" + b.isLocationForced() + "\n" + b.getMemoryOrder() + "\n" + b.accessKind() + "\n" + b.stamp(NodeView.DEFAULT));
@@ -627,6 +634,9 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
                 }
 
                 if (!LoopUtility.canUseWithoutProxy(cfg, edgeDataEqual, n)) {
+                    if (n instanceof RawLoadNode) {
+                        System.err.println("GVN abort: " + n + " -> " + edgeDataEqual);
+                    }
                     earlyGVNAbort.increment(graph.getDebug());
                     return;
                 }
@@ -648,6 +658,9 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
          * Preserve a node for global value numbering in dominated code.
          */
         public void rememberNodeForGVN(Node n) {
+            if (n instanceof RawLoadNode) {
+                System.err.println("GVN remember " + n);
+            }
             GraalError.guarantee(find(n) == null, "Must GVN before adding a new node");
             add(n);
         }
@@ -680,6 +693,9 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
                     if (entry instanceof MemoryAccess) {
                         MemoryAccess mem = (MemoryAccess) entry;
                         if (mem.getLocationIdentity().overlaps(loc)) {
+                            if (entry instanceof RawLoadNode) {
+                                System.err.println("GVN kill " + entry + " by " + loc);
+                            }
                             entries[i] = null;
                             deleted++;
                         }
