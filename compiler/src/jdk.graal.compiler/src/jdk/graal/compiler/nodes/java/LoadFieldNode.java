@@ -52,6 +52,7 @@ import jdk.graal.compiler.nodes.memory.SingleMemoryKill;
 import jdk.graal.compiler.nodes.spi.Canonicalizable;
 import jdk.graal.compiler.nodes.spi.CanonicalizerTool;
 import jdk.graal.compiler.nodes.spi.UncheckedInterfaceProvider;
+import jdk.graal.compiler.nodes.spi.ValueProxy;
 import jdk.graal.compiler.nodes.spi.Virtualizable;
 import jdk.graal.compiler.nodes.spi.VirtualizerTool;
 import jdk.graal.compiler.nodes.type.StampTool;
@@ -100,7 +101,11 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
     }
 
     public static boolean isClassTypeParamsArray(ValueNode value) {
-        return value instanceof LoadFieldNode && isClassTypeParamsField(((LoadFieldNode) value).field());
+        ValueNode original = value;
+        while (original instanceof ValueProxy) {
+            original = ((ValueProxy) original).getOriginalNode();
+        }
+        return original instanceof LoadFieldNode && isClassTypeParamsField(((LoadFieldNode) original).field());
     }
 
     public static LoadFieldNode create(Assumptions assumptions, ValueNode object, ResolvedJavaField field) {
