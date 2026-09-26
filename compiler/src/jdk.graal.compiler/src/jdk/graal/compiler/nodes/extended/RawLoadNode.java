@@ -126,6 +126,9 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
                     MemoryOrderMode memoryOrder) {
         super(c, computeStampForArrayAccess(object, accessKind, null), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
                         memoryOrder);
+        if (this.id() == 14868) {
+            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
+        }
     }
 
     private static LocationIdentity classTypeParamsLocation(ValueNode object, LocationIdentity locationIdentity) {
