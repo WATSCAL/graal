@@ -530,12 +530,11 @@ public class DominatorBasedGlobalValueNumberingPhase extends PostRunCanonicaliza
             for (int i = 0; i < length; i++) {
                 Node entry = entries[i];
                 if (entry != null) {
-                    if (entry instanceof RawLoadNode a && n instanceof RawLoadNode b && a.object() == b.object() && LoadFieldNode.isClassTypeParamsArray(a.object()) {
+                    if (entry instanceof RawLoadNode a && n instanceof RawLoadNode b) {
                         System.err.println(
-                                        "Raw GVN: a=%s b=%s data=%s inputs=%s"
-                                        + " a[loc=%s force=%s order=%s kind=%s stamp=%s]"
-                                        + " b[loc=%s force=%s order=%s kind=%s stamp=%s]"
-                                        + a + "\n" + b + "\n"
+                                        "Match:\n"
+                                        + a + " on " + a.object() + "\n"
+					+ b + " on " + b.object() + "\n"
                                         + a.getNodeClass().dataEquals(a, b) + a.getNodeClass().equalInputs(a, b) + "\n"
                                         + a.getLocationIdentity() + "\n" + a.isLocationForced() + "\n" + a.getMemoryOrder() + "\n" + a.accessKind() + "\n" + a.stamp(NodeView.DEFAULT) + "\n"
                                         + b.getLocationIdentity() + "\n" + b.isLocationForced() + "\n" + b.getMemoryOrder() + "\n" + b.accessKind() + "\n" + b.stamp(NodeView.DEFAULT));
