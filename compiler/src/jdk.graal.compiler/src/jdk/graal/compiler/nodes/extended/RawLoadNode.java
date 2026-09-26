@@ -80,9 +80,7 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
     public RawLoadNode(ValueNode object, ValueNode offset, JavaKind accessKind, LocationIdentity locationIdentity, boolean forceLocation, MemoryOrderMode memoryOrder) {
         super(TYPE, StampFactory.forKind(accessKind.getStackKind()), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
                         memoryOrder);
-        if (this.id() == 14868) {
-            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
-        }
+        System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
     }
 
     /**
@@ -91,9 +89,7 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
      */
     public RawLoadNode(@InjectedNodeParameter Stamp stamp, ValueNode object, ValueNode offset, LocationIdentity locationIdentity, JavaKind accessKind) {
         super(TYPE, stamp, object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), false, MemoryOrderMode.PLAIN);
-        if (this.id() == 14868) {
-            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
-        }
+        System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
     }
 
     static Stamp computeStampForArrayAccess(ValueNode object, JavaKind accessKind, Stamp oldStamp) {
@@ -126,9 +122,7 @@ public class RawLoadNode extends UnsafeAccessNode implements Lowerable, Virtuali
                     MemoryOrderMode memoryOrder) {
         super(c, computeStampForArrayAccess(object, accessKind, null), object, offset, accessKind, classTypeParamsLocation(object, locationIdentity), forceLocation,
                         memoryOrder);
-        if (this.id() == 14868) {
-            System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
-        }
+        System.err.println(toString() + " is constructed to have " + this.locationIdentity + " on " + this.object());
     }
 
     private static LocationIdentity classTypeParamsLocation(ValueNode object, LocationIdentity locationIdentity) {
