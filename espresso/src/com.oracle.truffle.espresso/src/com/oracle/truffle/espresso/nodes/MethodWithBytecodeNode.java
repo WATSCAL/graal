@@ -218,7 +218,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     private byte[] collectTraitTypeParams(StaticObject receiver) {
         byte[] key = new byte[traitTypeParamAccessors.length];
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw EspressoError.shouldNotReachHere();
+        throw EspressoError.shouldNotReachHere("Trait default method: " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
         // for (int i = 0; i < traitTypeParamAccessors.length; ++i) {
         //     ReifiedDebugCounter.incInterfaceAccessorCall();
         //     key[i] = (byte) traitTypeParamAccessors[i].invokeDirectInterface(receiver);
