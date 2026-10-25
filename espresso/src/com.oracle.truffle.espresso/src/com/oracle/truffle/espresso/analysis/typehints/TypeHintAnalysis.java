@@ -1,15 +1,14 @@
 package com.oracle.truffle.espresso.analysis.typehints;
 
-import com.oracle.truffle.espresso.analysis.BlockIterator;
 import com.oracle.truffle.espresso.analysis.GraphBuilder;
 import com.oracle.truffle.espresso.analysis.graph.Graph;
 import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
-import com.oracle.truffle.espresso.impl.Method;
-import com.oracle.truffle.espresso.runtime.EspressoContext;
-import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
-import com.oracle.truffle.espresso.impl.Field;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
+import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
+import com.oracle.truffle.espresso.impl.Field;
+import com.oracle.truffle.espresso.impl.Method;
+import com.oracle.truffle.espresso.runtime.EspressoContext;
 
 
 public class TypeHintAnalysis {
@@ -24,9 +23,8 @@ public class TypeHintAnalysis {
         int maxLocals = methodVersion.getMaxLocals();
         int maxStack = methodVersion.getMaxStackSize();
         int totalBlocks = graph.totalBlocks();
-        TypePropagationClosure closure = new TypePropagationClosure(context, codeLength, methodVersion, maxLocals, maxStack, totalBlocks);
-        //System.out.println("Analyze " + method.getDeclaringKlass().getNameAsString() + " " + method.getNameAsString());
-        BlockIterator.analyze(method, graph, closure);
+        TypePropagationClosure closure = new TypePropagationClosure(context, codeLength, graph, methodVersion, maxLocals, maxStack, totalBlocks);
+        closure.analyze();
         return closure.getRes();
     }
 

@@ -4,10 +4,13 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 import com.oracle.truffle.espresso.analysis.AnalysisProcessor;
 import com.oracle.truffle.espresso.analysis.BlockIterator;
 import com.oracle.truffle.espresso.analysis.BlockIteratorClosure;
+import com.oracle.truffle.espresso.analysis.graph.Graph;
 import com.oracle.truffle.espresso.analysis.graph.LinkedBlock;
 import com.oracle.truffle.espresso.classfile.JavaKind;
 import com.oracle.truffle.espresso.classfile.attributes.reified.ExtraBoxUnboxAttribute;
@@ -58,35 +61,46 @@ import com.oracle.truffle.espresso.shared.resolver.CallSiteType;
 import com.oracle.truffle.espresso.shared.resolver.ResolvedCall;
 import com.oracle.truffle.espresso.substitutions.standard.Target_java_lang_invoke_MethodHandleNatives.SiteTypes;
 
-public class TypePropagationClosure extends BlockIteratorClosure{
+public class TypePropagationClosure {
 
     private final EspressoContext ctx;
-    private final TypeAnalysisResult[] resAtBCI;
-    private final TypeAnalysisState[] resAtBlockEnd;
+    private final int codeLength;
     private final Method.MethodVersion methodVersion;
+    private final int totalBlocks;
+    Graph<? extends LinkedBlock> graph;
     private final int maxLocals;
     private final int maxStack;
+    private final BytecodeStream bs;
+
+    private final TypeAnalysisResult[] resAtBCI;
+    private final TypeAnalysisState[] resAtBlockEnd;
+    private boolean nonTrivial;
+
     private final InvokeReturnTypeAttribute.Entry[] invokeReturnTypeAttributes;
     private final AbstractSet<Integer> ignoredCalls;
-    private final int codeLength;
-    private boolean nonTrivial;
 
     public TypePropagationClosure(
                     EspressoContext ctx,
-                    int codeLength, 
+                    int codeLength,
+                    Graph<? extends LinkedBlock> graph,
                     Method.MethodVersion methodVersion,
                     int maxLocals,
                     int maxStack,
                     int totalBlocks) {
         this.ctx = ctx;
-        this.resAtBCI = new TypeAnalysisResult[codeLength + 1];
-        this.resAtBlockEnd = new TypeAnalysisState[totalBlocks];
+        this.codeLength = codeLength;
         this.methodVersion = methodVersion;
+        this.totalBlocks = totalBlocks;
+        this.graph = graph;
+        this.bs = new BytecodeStream(methodVersion.getOriginalCode());
         this.maxLocals = maxLocals;
         this.maxStack = maxStack;
-        InvokeReturnTypeAttribute attr = getMethod().getInvokeReturnTypeAttribute();
-        this.codeLength = codeLength;
+
+        this.resAtBCI = new TypeAnalysisResult[codeLength + 1];
+        this.resAtBlockEnd = new TypeAnalysisState[totalBlocks];
         this.nonTrivial = false;
+    
+        InvokeReturnTypeAttribute attr = getMethod().getInvokeReturnTypeAttribute();
         this.invokeReturnTypeAttributes = attr == null ? null : attr.getEntries();
         ExtraBoxUnboxAttribute ignoreAttr = getMethod().getExtraBoxUnboxAttribute();
         if (ignoreAttr != null) {
@@ -96,28 +110,27 @@ public class TypePropagationClosure extends BlockIteratorClosure{
         }
     }
 
-    @Override
-    public BlockIterator.BlockProcessResult processBlock(LinkedBlock block, BytecodeStream bs, AnalysisProcessor processor) {
-        //System.out.println("block " + block.id() + " " + block);
-        TypeAnalysisState inState = mergePredecessors(block);
-        //System.out.println("inState.stackTop = " + inState.stackTop);
-        TypeAnalysisState outState = analyzeInBlock(block, bs, inState);
-        //System.out.println("outState.stackTop = " + outState.stackTop);
-        TypeAnalysisState previousState = this.resAtBlockEnd[block.id()];
-        if (outState.equals(previousState)){
-            //System.out.println("Skipping");
-            return BlockIterator.BlockProcessResult.SKIP;
-        } else {
-            //System.out.println("Overwriting");
-            this.resAtBlockEnd[block.id()] = outState.copy();
-            return BlockIterator.BlockProcessResult.DONE;
+    public void analyze() {
+        Deque<LinkedBlock> queue = new ArrayDeque<LinkedBlock>();
+        boolean[] visit = new boolean[totalBlocks];
+        queue.offer(graph.entryBlock());
+        visit[graph.entryBlock().id()] = true;
+        while (!queue.isEmpty()) {
+            LinkedBlock currentBlock = queue.poll();
+            TypeAnalysisState stateAtBlockStart = generateBlockStartState(currentBlock);
+            resAtBlockEnd[currentBlock.id()] = analyzeInBlock(currentBlock, bs, stateAtBlockStart);
+            for (int successorID : currentBlock.successorsID()) {
+                if (!visit[successorID]) {
+                    queue.offer(graph.get(successorID));
+                    visit[successorID] = true;
+                }
+            }
         }
+
     }
 
-    private TypeAnalysisState mergePredecessors(LinkedBlock block) {
-        List<TypeAnalysisState> states = new ArrayList<>();
-        //root block: method entry
-        if (block == getEntry(block.graph())) {
+    private TypeAnalysisState generateBlockStartState(LinkedBlock block) {
+        if (block == graph.entryBlock()) {
             TypeAnalysisState rootState = new TypeAnalysisState(maxLocals, maxStack);
             MethodParameterTypeAttribute methodParameterTypeAttribute = getMethod().getMethodParameterTypeAttribute();
             Symbol<Type>[] signature = getMethod().getParsedSignature();
@@ -145,12 +158,10 @@ public class TypePropagationClosure extends BlockIteratorClosure{
         for (int predId : block.predecessorsID()){
             TypeAnalysisState predState = this.resAtBlockEnd[predId];
             if (predState != null) {
-                states.add(predState.copy());
-            } else {
-                states.add(null);
+                return predState;
             }
         }
-        return TypeAnalysisState.merge(states, maxLocals, maxStack);
+        return null;
     }
 
     private TypeAnalysisState analyzeInBlock(LinkedBlock block, BytecodeStream bs, TypeAnalysisState inState){
