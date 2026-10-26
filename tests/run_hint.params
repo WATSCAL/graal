@@ -1,1 +1,1 @@
--cp ../tests/classfiles/hint:../tests/classfiles/lib/scala-library-reified.jar
+-cp ../tests/classfiles/hint:../tests/classfiles/lib/scala-library-reified-collections-unboxed.jar
