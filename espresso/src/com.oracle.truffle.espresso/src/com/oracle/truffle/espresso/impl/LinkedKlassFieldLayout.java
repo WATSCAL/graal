@@ -23,7 +23,6 @@
 package com.oracle.truffle.espresso.impl;
 
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_HIDDEN;
-
 import static java.util.Map.entry;
 
 import java.util.HashSet;
@@ -31,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import com.oracle.truffle.espresso.meta.EspressoError;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.staticobject.StaticShape;
 import com.oracle.truffle.api.staticobject.StaticShape.Builder;
@@ -40,7 +38,6 @@ import com.oracle.truffle.espresso.classfile.Constants;
 import com.oracle.truffle.espresso.classfile.JavaVersion.VersionRange;
 import com.oracle.truffle.espresso.classfile.ParserField;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
-import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -48,7 +45,6 @@ import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Names;
 import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Types;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject.StaticObjectFactory;
-import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 
 final class LinkedKlassFieldLayout {
     final StaticShape<StaticObjectFactory> instanceShape;
@@ -63,75 +59,7 @@ final class LinkedKlassFieldLayout {
 
     final int fieldTableLength;
 
-    public static final class SpecializedLayout {
-        @CompilationFinal(dimensions = 1)
-        final LinkedField[] instanceFields;
-
-        final StaticShape<StaticObjectFactory> instanceShape;
-
-        private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields,
-                                                        byte reifiedType) {
-            LinkedField field = new LinkedField(parserField, slot, idMode);
-            Class<?> fieldType;
-            switch (reifiedType) {
-                case TypeHints.BYTE: fieldType = byte.class; break;
-                case TypeHints.CHAR: fieldType = char.class; break;
-                case TypeHints.DOUBLE: fieldType = double.class; break;
-                case TypeHints.FLOAT: fieldType = float.class; break;
-                case TypeHints.INT: fieldType = int.class; break;
-                case TypeHints.LONG: fieldType = long.class; break;
-                case TypeHints.SHORT: fieldType = short.class; break;
-                case TypeHints.BOOLEAN: fieldType = boolean.class; break;
-                default: fieldType = StaticObject.class; break; //can never be hidden fields
-            }
-            builder.property(field, fieldType, storeAsFinal(parserKlass, parserField));
-            linkedFields[index] = field;
-        }
-
-        private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields) {
-            LinkedField field = new LinkedField(parserField, slot, idMode);
-            builder.property(field, LinkedField.getPropertyType(parserField), storeAsFinal(parserKlass, parserField));
-            linkedFields[index] = field;
-        }
-
-        SpecializedLayout(EspressoLanguage language, LinkedKlass currentKlass, ParserKlass parserKlass, LinkedKlass superKlass, byte[] classTypeArgs) {
-            StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
-
-
-            FieldCounter fieldCounter = new FieldCounter(parserKlass, language);
-            int nextInstanceFieldIndex = 0;
-            int nextInstanceFieldSlot = superKlass == null ? 0 : superKlass.getFieldTableLength();
-            instanceFields = new LinkedField[fieldCounter.instanceFields];
-
-            LinkedField.IdMode idMode = LinkedKlassFieldLayout.getIdMode(parserKlass);
-
-            for (ParserField parserField : parserKlass.getFields()) {
-                FieldTypeAttribute attr = parserField.getFieldTypeAttribute();
-                if (attr != null && attr.hint != null && attr.hint.getKind() == TypeHints.CLASS_TYPE_PARAM && attr.hint.getIndex() >= 0) {
-                    byte alteredType = classTypeArgs[attr.hint.getIndex()];
-                    assert !parserField.isStatic();
-                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields, alteredType);
-                } else if (!parserField.isStatic()) {
-                    createAndRegisterLinkedField(parserKlass, parserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
-                }
-            }
-
-            for (HiddenField hiddenField : fieldCounter.hiddenFieldNames) {
-                if (hiddenField.predicate.test(language)) {
-                    ParserField hiddenParserField = new ParserField(ACC_HIDDEN | hiddenField.additionalFlags, hiddenField.name, hiddenField.type, null);
-                    createAndRegisterLinkedField(parserKlass, hiddenParserField, nextInstanceFieldSlot++, nextInstanceFieldIndex++, idMode, instanceBuilder, instanceFields);
-                }
-            }
-
-            if (superKlass == null) {
-                instanceShape = instanceBuilder.build(StaticObject.class, StaticObjectFactory.class);
-            } else {
-                instanceShape = instanceBuilder.build(superKlass.getSpecializedShape(language, classTypeArgs));
-            }
-        }
-    }
-
-    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) { // all generic fields are created as reference slots
+    LinkedKlassFieldLayout(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass) {
         StaticShape.Builder instanceBuilder = StaticShape.newBuilder(language);
         StaticShape.Builder staticBuilder = StaticShape.newBuilder(language);
 

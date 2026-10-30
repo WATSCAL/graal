@@ -25,22 +25,14 @@ package com.oracle.truffle.espresso.impl;
 import static com.oracle.truffle.espresso.classfile.Constants.ACC_FINALIZER;
 
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
-import com.oracle.truffle.espresso.meta.EspressoError;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.staticobject.StaticShape;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.classfile.ImmutableConstantPool;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
 import com.oracle.truffle.espresso.classfile.ParserMethod;
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -57,9 +49,6 @@ public final class LinkedKlass {
 
     // Linked structural references.
     private final LinkedKlass superKlass;
-
-    public final int curLevelTypeParamNum;
-    public final int allTypeParamNum;
 
     @CompilationFinal(dimensions = 1) //
     private final LinkedKlass[] interfaces;
@@ -78,17 +67,6 @@ public final class LinkedKlass {
     // static fields declared in the corresponding LinkedKlass (no hidden fields)
     @CompilationFinal(dimensions = 1) //
     final LinkedField[] staticFields;
-
-    @CompilationFinal(dimensions = 2)
-    private byte[][] specializedKeys;
-    @CompilationFinal(dimensions = 1)
-    private Object[] specializedShapes;
-    @CompilationFinal(dimensions = 2)
-    private LinkedField[][] specializedInstanceFields;
-
-    private static final byte[][] EMPTY_BYTE_KEY = new byte[0][];
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    private static final LinkedField[][] EMPTY_LINKED_FIELD_ARRAY = new LinkedField[0][];
 
     final int fieldTableLength;
 
@@ -122,17 +100,6 @@ public final class LinkedKlass {
             linkedMethods[i] = new LinkedMethod(parserMethod);
         }
         this.methods = linkedMethods;
-
-        ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
-        TraitTypeParamListAttribute traitTypeParamList = (TraitTypeParamListAttribute) this.parserKlass.getAttribute(TraitTypeParamListAttribute.NAME);
-        this.curLevelTypeParamNum = Modifier.isInterface(getFlags()) ?
-                                        (traitTypeParamList != null ? traitTypeParamList.getTypeParamAccessorMethodRefs().length : 0) :
-                                        (typeParamList != null ? typeParamList.getTypeParams().length : 0);
-        this.allTypeParamNum = superKlass != null ? superKlass.allTypeParamNum + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
-
-        this.specializedKeys = EMPTY_BYTE_KEY;
-        this.specializedShapes = EMPTY_OBJECT_ARRAY;
-        this.specializedInstanceFields = EMPTY_LINKED_FIELD_ARRAY;
     }
 
     public static LinkedKlass create(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces) {
@@ -229,103 +196,6 @@ public final class LinkedKlass {
     public StaticShape<StaticObjectFactory> getShape(boolean isStatic) {
         return isStatic ? staticShape : instanceShape;
     }
-
-    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
-    private boolean matchSpecializationKey(int specializationIndex, byte[] classTypeArgs) {
-        for (int i = 0; i < this.allTypeParamNum; ++i) {
-            if (this.specializedKeys[specializationIndex][i] != classTypeArgs[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
-    public int getSpecializationIndexReadOnly(byte[] classTypeArgs) {
-        // System.out.println("getSpecializationIndexReadOnly " + parserKlass.getName().toString());
-        // System.out.println(classTypeArgs.length);
-        // for (byte v : classTypeArgs) System.out.print(v);
-        // System.out.print('\n');
-        for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
-            if (matchSpecializationKey(idx, classTypeArgs)) {
-                return idx;
-            }
-        }
-
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw EspressoError.shouldNotReachHere();
-    }
-
-    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_UNROLL_UNTIL_RETURN)
-    public int getSpecializationIndex(EspressoLanguage language, byte[] classTypeArgs) {
-        for (int idx = 0; idx < this.specializedKeys.length; ++idx) {
-            if (matchSpecializationKey(idx, classTypeArgs)) {
-                return idx;
-            }
-        }
-
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-
-        /*
-        System.err.print("insert class specialization for " + parserKlass.getName().toString() + ":");
-        for (byte b : classTypeArgs) {
-            System.err.print(" " + b);
-        }
-        System.err.print('\n');
-        */
-
-        LinkedKlassFieldLayout.SpecializedLayout newLayout = new LinkedKlassFieldLayout.SpecializedLayout(language, this, this.parserKlass, this.superKlass, classTypeArgs);
-
-        int curLen = this.specializedKeys.length;
-
-        this.specializedKeys = Arrays.copyOf(this.specializedKeys, curLen + 1);
-        this.specializedKeys[curLen] = Arrays.copyOf(classTypeArgs, this.allTypeParamNum);
-        this.specializedShapes = Arrays.copyOf(this.specializedShapes, curLen + 1);
-        this.specializedShapes[curLen] = newLayout.instanceShape;
-        this.specializedInstanceFields = Arrays.copyOf(this.specializedInstanceFields, curLen + 1);
-        this.specializedInstanceFields[curLen] = newLayout.instanceFields;
-
-        //System.out.println(parserKlass.getName().toString() + " Inserted a new specialization at " + curLen);
-        return curLen;
-    }
-
-    @SuppressWarnings("unchecked")
-    public StaticShape<StaticObjectFactory> getSpecializedShapeAt(int idx) {
-        return (StaticShape<StaticObjectFactory>) this.specializedShapes[idx];
-    }
-
-    public byte[] getSpecializedKeyAt(int idx) {
-        //System.out.println(parserKlass.getName().toString() + " getSpecializedKeyAt " + idx);
-        return this.specializedKeys[idx];
-    }
-
-    public LinkedField[] getSpecializedInstanceFieldsAt(int idx) {
-        return this.specializedInstanceFields[idx];
-    }
-
-    @SuppressWarnings("unchecked")
-    public StaticShape<StaticObjectFactory> getSpecializedShape(EspressoLanguage language, byte[] classTypeArgs) {
-        if (this.allTypeParamNum == 0) {
-            return this.instanceShape;
-        }
-
-        //CompilerDirectives.transferToInterpreterAndInvalidate();
-        int idx = this.getSpecializationIndex(language, classTypeArgs);
-        return (StaticShape<StaticObjectFactory>) this.specializedShapes[idx];
-    }
-
-
-    /*
-    public StaticShape<StaticObjectFactory> getReifiedShape(boolean isStatic, byte[] reifiedTypeValues) {
-        assert reifiedTypeValues != null : "reifiedTypeValues must not be null";
-        ByteArrayKey key = new ByteArrayKey(reifiedTypeValues);
-        LinkedKlassFieldLayout fieldLayout = reifiedShapes.get(key);
-        if (fieldLayout != null) return isStatic ? fieldLayout.staticShape : fieldLayout.instanceShape;
-        fieldLayout = new LinkedKlassFieldLayout(language, parserKlass, superKlass, reifiedTypeValues);
-        reifiedShapes.put(key, fieldLayout);
-        return isStatic ? fieldLayout.staticShape : fieldLayout.instanceShape;
-    }
-    */
 
     @Override
     public String toString() {
