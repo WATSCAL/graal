@@ -22,55 +22,6 @@
  */
 package com.oracle.truffle.espresso.nodes;
 
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleSafepoint;
-import com.oracle.truffle.api.TruffleStackTrace;
-import com.oracle.truffle.api.exception.AbstractTruffleException;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper.YieldException;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
-import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.nodes.BytecodeOSRNode;
-import com.oracle.truffle.api.nodes.ControlFlowException;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.espresso.EspressoLanguage;
-import com.oracle.truffle.espresso.analysis.liveness.LivenessAnalysis;
-import com.oracle.truffle.espresso.analysis.typehints.TypeAnalysisResult;
-import com.oracle.truffle.espresso.bytecode.MapperBCI;
-import com.oracle.truffle.espresso.classfile.ExceptionHandler;
-import com.oracle.truffle.espresso.classfile.JavaKind;
-import com.oracle.truffle.espresso.classfile.attributes.BootstrapMethodsAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.MethodParameterTypeAttribute;
-import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
-import com.oracle.truffle.espresso.classfile.bytecode.BytecodeLookupSwitch;
-import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
-import com.oracle.truffle.espresso.classfile.bytecode.BytecodeTableSwitch;
-import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.AALOAD;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.AASTORE;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.ACONST_NULL;
@@ -278,37 +229,6 @@ import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.SWAP;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.TABLESWITCH;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.THROW_VALUE;
 import static com.oracle.truffle.espresso.classfile.bytecode.Bytecodes.WIDE;
-import com.oracle.truffle.espresso.classfile.bytecode.VolatileArrayAccess;
-import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.DoubleConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.DynamicConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.FloatConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.IntegerConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.LongConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodHandleConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodRefConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.MethodTypeConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.PoolConstant;
-import com.oracle.truffle.espresso.classfile.constantpool.Resolvable;
-import com.oracle.truffle.espresso.classfile.constantpool.StringConstant;
-import com.oracle.truffle.espresso.classfile.descriptors.SignatureSymbols;
-import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
-import com.oracle.truffle.espresso.classfile.descriptors.Type;
-import com.oracle.truffle.espresso.classfile.perf.DebugCounter;
-import com.oracle.truffle.espresso.classfile.perf.ReifiedDebugCounter;
-import com.oracle.truffle.espresso.constantpool.Resolution;
-import com.oracle.truffle.espresso.constantpool.ResolvedDynamicConstant;
-import com.oracle.truffle.espresso.constantpool.ResolvedWithInvokerClassMethodRefConstant;
-import com.oracle.truffle.espresso.constantpool.RuntimeConstantPool;
-import com.oracle.truffle.espresso.impl.ArrayKlass;
-import com.oracle.truffle.espresso.impl.Field;
-import com.oracle.truffle.espresso.impl.Klass;
-import com.oracle.truffle.espresso.impl.LinkedField;
-import com.oracle.truffle.espresso.impl.Method;
-import com.oracle.truffle.espresso.impl.Method.MethodVersion;
-import com.oracle.truffle.espresso.impl.ObjectKlass;
-import com.oracle.truffle.espresso.meta.EspressoError;
-import com.oracle.truffle.espresso.meta.Meta;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.clear;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.createFrameDescriptor;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.dup1;
@@ -336,8 +256,6 @@ import static com.oracle.truffle.espresso.nodes.EspressoFrame.putFloat;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.putInt;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.putLong;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.putObject;
-import static com.oracle.truffle.espresso.nodes.EspressoFrame.putReifiedDouble;
-import static com.oracle.truffle.espresso.nodes.EspressoFrame.putReifiedLong;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.putReturnAddress;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.setBCI;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.setLocalDouble;
@@ -348,6 +266,81 @@ import static com.oracle.truffle.espresso.nodes.EspressoFrame.setLocalObject;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.setLocalObjectOrReturnAddress;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.startingStackOffset;
 import static com.oracle.truffle.espresso.nodes.EspressoFrame.swapSingle;
+
+import java.io.Serial;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleSafepoint;
+import com.oracle.truffle.api.TruffleStackTrace;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper.YieldException;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
+import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.nodes.BytecodeOSRNode;
+import com.oracle.truffle.api.nodes.ControlFlowException;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.espresso.EspressoLanguage;
+import com.oracle.truffle.espresso.analysis.liveness.LivenessAnalysis;
+import com.oracle.truffle.espresso.bytecode.MapperBCI;
+import com.oracle.truffle.espresso.classfile.ExceptionHandler;
+import com.oracle.truffle.espresso.classfile.JavaKind;
+import com.oracle.truffle.espresso.classfile.attributes.BootstrapMethodsAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.LineNumberTableAttribute;
+import com.oracle.truffle.espresso.classfile.bytecode.BytecodeLookupSwitch;
+import com.oracle.truffle.espresso.classfile.bytecode.BytecodeStream;
+import com.oracle.truffle.espresso.classfile.bytecode.BytecodeTableSwitch;
+import com.oracle.truffle.espresso.classfile.bytecode.Bytecodes;
+import com.oracle.truffle.espresso.classfile.bytecode.VolatileArrayAccess;
+import com.oracle.truffle.espresso.classfile.constantpool.ClassConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.DoubleConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.DynamicConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.FloatConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.IntegerConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.LongConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.MethodHandleConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.MethodRefConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.MethodTypeConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.PoolConstant;
+import com.oracle.truffle.espresso.classfile.constantpool.Resolvable;
+import com.oracle.truffle.espresso.classfile.constantpool.StringConstant;
+import com.oracle.truffle.espresso.classfile.descriptors.SignatureSymbols;
+import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
+import com.oracle.truffle.espresso.classfile.descriptors.Type;
+import com.oracle.truffle.espresso.classfile.perf.DebugCounter;
+import com.oracle.truffle.espresso.constantpool.Resolution;
+import com.oracle.truffle.espresso.constantpool.ResolvedDynamicConstant;
+import com.oracle.truffle.espresso.constantpool.ResolvedWithInvokerClassMethodRefConstant;
+import com.oracle.truffle.espresso.constantpool.RuntimeConstantPool;
+import com.oracle.truffle.espresso.impl.ArrayKlass;
+import com.oracle.truffle.espresso.impl.Field;
+import com.oracle.truffle.espresso.impl.Klass;
+import com.oracle.truffle.espresso.impl.Method;
+import com.oracle.truffle.espresso.impl.Method.MethodVersion;
+import com.oracle.truffle.espresso.impl.ObjectKlass;
+import com.oracle.truffle.espresso.meta.EspressoError;
+import com.oracle.truffle.espresso.meta.Meta;
 import com.oracle.truffle.espresso.nodes.helper.EspressoReferenceArrayStoreNode;
 import com.oracle.truffle.espresso.nodes.methodhandle.MHInvokeGenericNode.MethodHandleInvoker;
 import com.oracle.truffle.espresso.nodes.quick.BaseQuickNode;
@@ -367,13 +360,12 @@ import com.oracle.truffle.espresso.nodes.quick.interop.IntArrayLoadQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.IntArrayStoreQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.LongArrayLoadQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.LongArrayStoreQuickNode;
+import com.oracle.truffle.espresso.nodes.quick.interop.QuickenedGetFieldNode;
+import com.oracle.truffle.espresso.nodes.quick.interop.QuickenedPutFieldNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ReferenceArrayLoadQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ReferenceArrayStoreQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ShortArrayLoadQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.interop.ShortArrayStoreQuickNode;
-import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeArrayApplyNode;
-import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeArrayLengthNode;
-import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeArrayUpdateNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeContinuableNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeDynamicCallSiteNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeHandleNode;
@@ -381,7 +373,6 @@ import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeInterfaceQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeSpecialQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeStaticQuickNode;
-import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeUpcastNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.InvokeVirtualQuickNode;
 import com.oracle.truffle.espresso.nodes.quick.invoke.inline.InlinedMethodNode;
 import com.oracle.truffle.espresso.runtime.EspressoContext;
@@ -478,34 +469,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     private final int returnValueBci;
     private final int throwValueBci;
 
-    @CompilationFinal(dimensions = 1)
-    private final byte[] reifiedClassTypeParams;
-    @CompilationFinal(dimensions = 1)
-    private final byte[] reifiedMethodTypeParams;
-
-    @CompilationFinal(dimensions = 1)
-    private final byte[] invokeReturnTypes;
-    @CompilationFinal(dimensions = 1)
-    private final byte[] methodParamTypes;
-    @CompilationFinal(dimensions = 2)
-    private final byte[][] instOperandTypes;
-    @CompilationFinal(dimensions = 2)
-    private final byte[][] instOperandArrayElementTypes;
-    @CompilationFinal(dimensions = 1)
-    private final boolean[] ignoreInvoke;
-    @CompilationFinal(dimensions = 1)
-    private final int[] stackTopAdjustment;
-    @CompilationFinal(dimensions = 2)
-    private final int[][] allocTypeArgSlotIndices;
-    @CompilationFinal(dimensions = 2)
-    private final byte[][] resolvedAllocTypeArgs;
-
-    private final int methodTypeParamStartIndex; // index in parameter list, not argument array
-
-    @CompilerDirectives.CompilationFinal
-    public static final boolean DEBUG = false;
-
-    public BytecodeNode(MethodVersion methodVersion, TypeAnalysisResult[] instOperandTypeHints, byte[] reifiedMethodTypeParams, byte[] reifiedClassTypeParams, int methodTypeParamStartIndex) {
+    public BytecodeNode(MethodVersion methodVersion) {
         CompilerAsserts.neverPartOfCompilation();
         Method method = methodVersion.getMethod();
         assert method.hasBytecodes();
@@ -517,86 +481,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.code = customCode;
         this.bs = new BytecodeStream(code);
         this.stackOverflowErrorInfo = method.getSOEHandlerInfo();
-
-        this.reifiedClassTypeParams = reifiedClassTypeParams != null ? reifiedClassTypeParams : TypeHints.EMPTY_TYPE_ARGS;
-        this.reifiedMethodTypeParams = reifiedMethodTypeParams != null ? reifiedMethodTypeParams : TypeHints.EMPTY_TYPE_ARGS;
-
-        Symbol<Type>[] methodSignature = method.getParsedSignature();
-        int argCount = SignatureSymbols.parameterCount(methodSignature);
-        MethodParameterTypeAttribute methodParameterTypeAttribute = methodVersion.getMethod().getMethodParameterTypeAttribute();
-        this.methodParamTypes = new byte[argCount];
-        if (methodParameterTypeAttribute != null){
-            TypeHints.TypeB[] methodParameterTypeHints = methodParameterTypeAttribute.getParameterTypes();
-            for (int i = 0; i < methodParameterTypeHints.length; ++i) {
-                Symbol<Type> curSigType = SignatureSymbols.parameterType(methodSignature, i);
-                if (curSigType.byteAt(0) == 'L' && methodParameterTypeHints[i] != null) {
-                    this.methodParamTypes[i] = methodParameterTypeHints[i].resolve(reifiedMethodTypeParams, reifiedClassTypeParams);
-                } else {
-                    this.methodParamTypes[i] = 0;
-                }
-            }
-        } else {
-            for (int i = 0; i < methodParamTypes.length; ++i) methodParamTypes[i] = 0;
-        }
-
-        this.instOperandTypes = new byte[this.bs.endBCI()][];
-        this.instOperandArrayElementTypes = new byte[this.bs.endBCI()][];
-        this.invokeReturnTypes = new byte[this.bs.endBCI()];
-        this.ignoreInvoke = new boolean[this.bs.endBCI()];
-        this.stackTopAdjustment = new int[this.bs.endBCI()];
-        for (int i = 0; i < this.bs.endBCI(); ++i) {
-            this.invokeReturnTypes[i] = 0;
-            this.ignoreInvoke[i] = false;
-            this.stackTopAdjustment[i] = 0;
-        }
-        if (instOperandTypeHints != null) {
-            for (int i = 0; i < instOperandTypeHints.length; ++i) {
-                if (instOperandTypeHints[i] != null) {
-                    this.invokeReturnTypes[i] = (instOperandTypeHints[i].invokeReturnType != null) ? instOperandTypeHints[i].invokeReturnType.resolve(reifiedMethodTypeParams, reifiedClassTypeParams) : 0;
-                    this.ignoreInvoke[i] = instOperandTypeHints[i].ignoreInvoke;
-                    /*
-                    if (this.ignoreInvoke[i]) {
-                        System.out.println("ignore " + i + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
-                    }
-                    */
-                    this.stackTopAdjustment[i] = instOperandTypeHints[i].stackTopAdjustment;
-                    if (instOperandTypeHints[i].operands != null) {
-                        int len = instOperandTypeHints[i].operands.length;
-                        instOperandTypes[i] = new byte[len];
-                        instOperandArrayElementTypes[i] = new byte[len];
-                        for (int j = 0; j < len; ++j) {
-                            if (instOperandTypeHints[i].operands[j] != null) {
-                                instOperandTypes[i][j] = instOperandTypeHints[i].operands[j].resolve(reifiedMethodTypeParams, reifiedClassTypeParams);
-                                if (instOperandTypeHints[i].operands[j].isGenericArray()) {
-                                    instOperandArrayElementTypes[i][j] = instOperandTypeHints[i].operands[j].resolveArrayElement(reifiedMethodTypeParams, reifiedClassTypeParams);
-                                } else {
-                                    instOperandArrayElementTypes[i][j] = 0;
-                                }
-                            } else {
-                                instOperandTypes[i][j] = 0;
-                                instOperandArrayElementTypes[i][j] = 0;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        this.allocTypeArgSlotIndices = new int[this.bs.endBCI()][];
-	this.resolvedAllocTypeArgs = new byte[this.bs.endBCI()][];
-        BCNewTypeArgsAttribute allocTypeArgsAttr = method.getBCNewTypeArgsAttribute();
-        if (allocTypeArgsAttr != null) {
-            for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
-                this.allocTypeArgSlotIndices[entry.bcOffset()] = entry.localSlotIndices();
-                //System.out.println(method.getNameAsString() + " " + entry.bcOffset() + ": ");
-                //for (int v : entry.localSlotIndices()) System.out.print(v + " ");
-                //System.out.print('\n');
-            }
-        }
-
-        this.methodTypeParamStartIndex = methodTypeParamStartIndex;
-
-        this.frameDescriptor = calcFrameDescriptor(methodVersion);
+        this.frameDescriptor = createFrameDescriptor(methodVersion.getMaxLocals(), methodVersion.getMaxStackSize());
         this.noForeignObjects = Truffle.getRuntime().createAssumption("noForeignObjects");
         this.implicitExceptionProfile = false;
         this.livenessAnalysis = methodVersion.getLivenessAnalysis();
@@ -607,10 +492,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.trivialBytecodesCache = originalCode.length <= method.getContext().getEspressoEnv().TrivialMethodSize
                         ? TRIVIAL_UNINITIALIZED
                         : TRIVIAL_NO;
-    }
-
-    public static FrameDescriptor calcFrameDescriptor(MethodVersion methodVersion) {
-        return createFrameDescriptor(methodVersion.getMaxLocals(), methodVersion.getMaxStackSize());
     }
 
     public FrameDescriptor getFrameDescriptor() {
@@ -628,7 +509,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     @ExplodeLoop
     private void initArguments(VirtualFrame frame) {
         Object[] arguments = frame.getArguments();
-        
+
         boolean hasReceiver = !getMethod().isStatic();
         int receiverSlot = hasReceiver ? 1 : 0;
         int curSlot = 0;
@@ -642,58 +523,30 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
         Symbol<Type>[] methodSignature = getMethod().getParsedSignature();
         int argCount = SignatureSymbols.parameterCount(methodSignature);
-        assert this.methodParamTypes.length == argCount: "parameter hints length different from argument length";
-
         CompilerAsserts.partialEvaluationConstant(argCount);
         for (int i = 0; i < argCount; ++i) {
-            if (i >= methodTypeParamStartIndex && i < methodTypeParamStartIndex + reifiedMethodTypeParams.length) {
-                setLocalInt(frame, curSlot, this.reifiedMethodTypeParams[i - methodTypeParamStartIndex]);
-            } else {
-                Symbol<Type> argType = SignatureSymbols.parameterType(methodSignature, i);
-                // @formatter:off
-                switch (argType.byteAt(0)) {
-                    case 'Z' : setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
-                    case 'B' : setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot]));            break;
-                    case 'S' : setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot]));           break;
-                    case 'C' : setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot]));            break;
-                    case 'I' : setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]);               break;
-                    case 'F' : setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]);           break;
-                    case 'J' : setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]);     ++curSlot; break;
-                    case 'D' : setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); ++curSlot; break;
-                    case '[' : // fall through
-                    case 'L' : {
-                            CompilerAsserts.partialEvaluationConstant(methodParamTypes[i]);
-                            // System.out.println(argCount + " fetch " + methodParamTypes[i] + " at " + i);
-                            ReifiedDebugCounter.incParamRefToPrimitive(this.methodParamTypes[i]);
-                            switch (this.methodParamTypes[i]){
-                                case TypeHints.BYTE:
-                                    setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot])); break;
-                                case TypeHints.CHAR:
-                                    setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot])); break;
-                                case TypeHints.DOUBLE:
-                                    setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); break;
-                                case TypeHints.FLOAT:
-                                    setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]); break;
-                                case TypeHints.INT:
-                                    setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]); break;
-                                case TypeHints.LONG:
-                                    setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]); break;
-                                case TypeHints.SHORT:
-                                    setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot])); break;
-                                case TypeHints.BOOLEAN:
-                                    setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
-                                default:
-                                    StaticObject argument = (StaticObject) arguments[i + receiverSlot];
-                                    setLocalObject(frame, curSlot, argument);
-                                    checkNoForeignObjectAssumption(argument);
-                                    break;
-                            }
-                            break;
-                    }
-                    default :
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        throw EspressoError.shouldNotReachHere();
+            Symbol<Type> argType = SignatureSymbols.parameterType(methodSignature, i);
+            // @formatter:off
+            switch (argType.byteAt(0)) {
+                case 'Z' : setLocalInt(frame, curSlot, ((boolean) arguments[i + receiverSlot]) ? 1 : 0); break;
+                case 'B' : setLocalInt(frame, curSlot, ((byte) arguments[i + receiverSlot]));            break;
+                case 'S' : setLocalInt(frame, curSlot, ((short) arguments[i + receiverSlot]));           break;
+                case 'C' : setLocalInt(frame, curSlot, ((char) arguments[i + receiverSlot]));            break;
+                case 'I' : setLocalInt(frame, curSlot, (int) arguments[i + receiverSlot]);               break;
+                case 'F' : setLocalFloat(frame, curSlot, (float) arguments[i + receiverSlot]);           break;
+                case 'J' : setLocalLong(frame, curSlot, (long) arguments[i + receiverSlot]);     ++curSlot; break;
+                case 'D' : setLocalDouble(frame, curSlot, (double) arguments[i + receiverSlot]); ++curSlot; break;
+                case '[' : // fall through
+                case 'L' : {
+                    // Reference type.
+                    StaticObject argument = (StaticObject) arguments[i + receiverSlot];
+                    setLocalObject(frame, curSlot, argument);
+                    checkNoForeignObjectAssumption(argument);
+                    break;
                 }
+                default :
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    throw EspressoError.shouldNotReachHere();
             }
             // @formatter:on
             ++curSlot;
@@ -979,59 +832,11 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         putDouble(frame, top, getLocalDouble(frame, bs.readLocalIndex1(curBCI)));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
-                    case ALOAD_0:
-                    case ALOAD_1: // fall through
-                    case ALOAD_2: // fall through
-                    case ALOAD_3:
-                        // putObject(frame, top, getLocalObject(frame, curOpcode - ALOAD_0));
-                        // livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
-                        // break;
                     case ALOAD:
-                        int aloadIndex;
-                        if (curOpcode == ALOAD) {
-                            aloadIndex = bs.readLocalIndex1(curBCI);
-                        } else {
-                            aloadIndex = curOpcode - ALOAD_0;
-                        }
-                        if (instOperandTypes[curBCI] != null) {
-                            assert instOperandTypes[curBCI].length == 1 : "Expected exactly one operand for ALOAD";
-                            CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
-                            ReifiedDebugCounter.incAloadToPrimitive(instOperandTypes[curBCI][0]);
-                            switch (instOperandTypes[curBCI][0]) {
-                                case TypeHints.BYTE:
-                                    putInt(frame, top, (byte) getLocalInt(frame, aloadIndex));
-                                    break;
-                                case TypeHints.CHAR:
-                                    putInt(frame, top, (char) getLocalInt(frame, aloadIndex));
-                                    break;
-                                case TypeHints.DOUBLE:
-                                    // double should take only one slot here
-                                    putReifiedDouble(frame, top, getLocalDouble(frame, aloadIndex));
-                                    break;
-                                case TypeHints.FLOAT:
-                                    putFloat(frame, top, getLocalFloat(frame, aloadIndex));
-                                    break;
-                                case TypeHints.INT:
-                                    putInt(frame, top, getLocalInt(frame, aloadIndex));
-                                    break;
-                                case TypeHints.LONG:
-                                    // long should take only one slot here
-                                    putReifiedLong(frame, top, getLocalLong(frame, aloadIndex));
-                                    break;
-                                case TypeHints.SHORT:
-                                    putInt(frame, top, (short) getLocalInt(frame, aloadIndex));
-                                    break;
-                                case TypeHints.BOOLEAN:
-                                    putInt(frame, top, getLocalInt(frame, aloadIndex));
-                                    break;
-                                default:
-                                    putObject(frame, top, getLocalObject(frame, aloadIndex));
-                            }
-                        } else {
-                            putObject(frame, top, getLocalObject(frame, aloadIndex));
-                        }
+                        putObject(frame, top, getLocalObject(frame, bs.readLocalIndex1(curBCI)));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
+
                     case ILOAD_0: // fall through
                     case ILOAD_1: // fall through
                     case ILOAD_2: // fall through
@@ -1060,6 +865,17 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         putDouble(frame, top, getLocalDouble(frame, curOpcode - DLOAD_0));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
+                    case ALOAD_0:
+                        putObject(frame, top, getLocalObject(frame, 0));
+                        livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
+                        break;
+                    case ALOAD_1: // fall through
+                    case ALOAD_2: // fall through
+                    case ALOAD_3:
+                        putObject(frame, top, getLocalObject(frame, curOpcode - ALOAD_0));
+                        livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
+                        break;
+
                     case IALOAD: // fall through
                     case LALOAD: // fall through
                     case FALOAD: // fall through
@@ -1088,57 +904,11 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         setLocalDouble(frame, bs.readLocalIndex1(curBCI), popDouble(frame, top - 1));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
-                    case ASTORE_0: // fall through
-                    case ASTORE_1: // fall through
-                    case ASTORE_2: // fall through
-                    case ASTORE_3:
-                        // setLocalObjectOrReturnAddress(frame, curOpcode - ASTORE_0, popReturnAddressOrObject(frame, top - 1));
-                        // livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
-                        // break;
                     case ASTORE:
-                        int astoreIndex;
-                        if (curOpcode == ASTORE) {
-                            astoreIndex = bs.readLocalIndex1(curBCI);
-                        } else {
-                            astoreIndex = curOpcode - ASTORE_0;
-                        }
-                        if (instOperandTypes[curBCI] != null){
-                            assert instOperandTypes[curBCI].length == 1 : "Expected exactly one operand for ASTORE";
-                            CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
-                            ReifiedDebugCounter.incAstoreToPrimitive(instOperandTypes[curBCI][0]);
-                            switch (instOperandTypes[curBCI][0]) {
-                                case TypeHints.BYTE:
-                                    setLocalInt(frame, astoreIndex, (byte) popInt(frame, top - 1));
-                                    break;
-                                case TypeHints.CHAR:
-                                    setLocalInt(frame, astoreIndex, (char) popInt(frame, top - 1));
-                                    break;
-                                case TypeHints.DOUBLE:
-                                    setLocalDouble(frame, astoreIndex, popDouble(frame, top - 1));
-                                    break;
-                                case TypeHints.FLOAT:
-                                    setLocalFloat(frame, astoreIndex, popFloat(frame, top - 1));
-                                    break;
-                                case TypeHints.INT:
-                                    setLocalInt(frame, astoreIndex, popInt(frame, top - 1));
-                                    break;
-                                case TypeHints.LONG:
-                                    setLocalLong(frame, astoreIndex, popLong(frame, top - 1));
-                                    break;
-                                case TypeHints.SHORT:
-                                    setLocalInt(frame, astoreIndex, (short) popInt(frame, top - 1));
-                                    break;
-                                case TypeHints.BOOLEAN:
-                                    setLocalInt(frame, astoreIndex, popInt(frame, top - 1));
-                                    break;
-                                default:
-                                    setLocalObjectOrReturnAddress(frame, astoreIndex, popReturnAddressOrObject(frame, top - 1));
-                            }
-                        } else {
-                            setLocalObjectOrReturnAddress(frame, astoreIndex, popReturnAddressOrObject(frame, top - 1));
-                        }
+                        setLocalObjectOrReturnAddress(frame, bs.readLocalIndex1(curBCI), popReturnAddressOrObject(frame, top - 1));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
+
                     case ISTORE_0: // fall through
                     case ISTORE_1: // fall through
                     case ISTORE_2: // fall through
@@ -1167,6 +937,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         setLocalDouble(frame, curOpcode - DSTORE_0, popDouble(frame, top - 1));
                         livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
                         break;
+                    case ASTORE_0: // fall through
+                    case ASTORE_1: // fall through
+                    case ASTORE_2: // fall through
+                    case ASTORE_3:
+                        setLocalObjectOrReturnAddress(frame, curOpcode - ASTORE_0, popReturnAddressOrObject(frame, top - 1));
+                        livenessAnalysis.performPostBCI(frame, curBCI, skipLivenessActions);
+                        break;
+
                     case IASTORE: // fall through
                     case LASTORE: // fall through
                     case FASTORE: // fall through
@@ -1510,7 +1288,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                         if (CompilerDirectives.hasNextTier() && loopCount.value > 0) {
                             LoopNode.reportLoopCount(this, loopCount.value);
                         }
-                        Object returnValue = getReturnValueAsObject(frame, top, curBCI);
+                        Object returnValue = getReturnValueAsObject(frame, top);
                         if (instrument != null) {
                             instrument.exitAt(frame, statementIndex, returnValue);
                         }
@@ -1549,31 +1327,11 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                     case INVOKESPECIAL: // fall through
                     case INVOKESTATIC:  // fall through
                     case INVOKEINTERFACE:
-                        if (this.ignoreInvoke[curBCI]) {
-                            // System.out.println("ignore invoke at " + curBCI + " at " + methodVersion.getDeclaringKlass().getName().toString() + "." + methodVersion.getName().toString());
-                            ReifiedDebugCounter.incExtraBoxUnboxIgnored();
-                            if (this.stackTopAdjustment[curBCI] != 0) {
-                                assert this.instOperandTypes[curBCI][0] == 'J' || this.instOperandTypes[curBCI][0] == 'D';
-                                if (this.instOperandTypes[curBCI][0] == 'J') {
-                                    long v = frame.getLongStatic(top - 1);
-                                    frame.clearPrimitiveStatic(top - 1);
-                                    frame.setLongStatic(top + this.stackTopAdjustment[curBCI] - 1, v);
-                                } else {
-                                    double v = frame.getDoubleStatic(top - 1);
-                                    frame.clearPrimitiveStatic(top - 1);
-                                    frame.setDoubleStatic(top + this.stackTopAdjustment[curBCI] - 1, v);
-                                }
-                                top += this.stackTopAdjustment[curBCI] - Bytecodes.stackEffectOf(curOpcode);
-                            } else {
-                                top -= Bytecodes.stackEffectOf(curOpcode);
-                            }
-                        } else {
-                            top += quickenInvoke(frame, top, curBCI, curOpcode, statementIndex);
-                        }
-                        break;
+                        top += quickenInvoke(frame, top, curBCI, curOpcode, statementIndex); break;
+
                     case NEW         :
                         Klass klass = resolveType(NEW, bs.readCPI2(curBCI));
-                        putObject(frame, top, newReferenceObject(frame, curBCI, klass)); break;
+                        putObject(frame, top, newReferenceObject(klass)); break;
                     case NEWARRAY    :
                         byte jvmPrimitiveType = bs.readByte(curBCI);
                         int length = popInt(frame, top - 1);
@@ -1926,6 +1684,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 throw e.reThrow();
             }
             assert curOpcode != WIDE && curOpcode != LOOKUPSWITCH && curOpcode != TABLESWITCH;
+
             int targetBCI = curBCI + Bytecodes.lengthOf(curOpcode);
             livenessAnalysis.performOnEdge(frame, curBCI, targetBCI, skipLivenessActions);
             if (instrument != null) {
@@ -1973,41 +1732,11 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
-    private byte[] getAllocTypeArgs(VirtualFrame frame, int curBCI) {
-        if (resolvedAllocTypeArgs[curBCI] != null) {
-            return resolvedAllocTypeArgs[curBCI];
-        }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        int len = this.allocTypeArgSlotIndices[curBCI].length;
-        byte[] allocTypeArgs = new byte[len];
-        for (int i = 0; i < len; ++i) {
-            allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
-        }
-        resolvedAllocTypeArgs[curBCI] = allocTypeArgs;
-        return allocTypeArgs;
-    }
-
-    @ExplodeLoop
-    private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
+    private StaticObject newReferenceObject(Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
-        ObjectKlass objKlass = (ObjectKlass) klass;
-        if (objKlass.getLinkedKlass().allTypeParamNum > 0) {
-            assert this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length == objKlass.getLinkedKlass().allTypeParamNum;
-            //System.out.println("Creating specialized object");
-            return getAllocator().createNewSpecialized(objKlass, getAllocTypeArgs(frame, curBCI));
-        } else {
-            return getAllocator().createNew(objKlass);
-        }
+        return getAllocator().createNew((ObjectKlass) klass);
     }
-
-    /*
-    private StaticObject newReifiedObject(Klass klass, byte[] reifiedTypeValues){
-        assert !klass.isPrimitive() : "Verifier guarantee";
-        GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
-        return getAllocator().createNewReified((ObjectKlass) klass, reifiedTypeValues);
-    }
-    */
 
     private StaticObject newPrimitiveArray(byte jvmPrimitiveType, int length) {
         Meta meta = getMethod().getMeta();
@@ -2038,14 +1767,14 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 // another thread beat us
                 return nodes[cpi];
             } else {
-                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke));
+                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
                 nodes[cpi] = newNode;
                 return newNode;
             }
         });
     }
 
-    private Object getReturnValueAsObject(VirtualFrame frame, int top, int curBCI) {
+    private Object getReturnValueAsObject(VirtualFrame frame, int top) {
         Symbol<Type> returnType = SignatureSymbols.returnType(getMethod().getParsedSignature());
         // @formatter:off
         switch (returnType.byteAt(0)) {
@@ -2059,25 +1788,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             case 'D' : return popDouble(frame, top - 1);
             case 'V' : return StaticObject.NULL; // void
             case '[' : // fall through
-            case 'L' : 
-                if (instOperandTypes[curBCI] != null) {
-                    assert instOperandTypes[curBCI].length == 1;
-                    CompilerAsserts.partialEvaluationConstant(instOperandTypes[curBCI][0]);
-                    ReifiedDebugCounter.incAreturnToPrimitive(instOperandTypes[curBCI][0]);
-                    switch (instOperandTypes[curBCI][0]) {
-                        case TypeHints.BYTE: return (byte) popInt(frame, top - 1);
-                        case TypeHints.CHAR: return (char) popInt(frame, top - 1);
-                        case TypeHints.DOUBLE: return popDouble(frame, top - 1);
-                        case TypeHints.FLOAT: return popFloat(frame, top - 1);
-                        case TypeHints.INT: return popInt(frame, top - 1);
-                        case TypeHints.LONG: return popLong(frame, top - 1);
-                        case TypeHints.SHORT: return (short) popInt(frame, top - 1);
-                        case TypeHints.BOOLEAN: return stackIntToBoolean(popInt(frame, top - 1));
-                        default: return popObject(frame, top - 1);
-                    }
-                } else {
-                    return popObject(frame, top - 1);
-                }
+            case 'L' : return popObject(frame, top - 1);
             default:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw EspressoError.shouldNotReachHere();
@@ -2560,7 +2271,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
     }
 
     @SuppressWarnings("try")
-    private int  quickenInvoke(VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex) {
+    private int quickenInvoke(VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex) {
         InvokeQuickNode quick = quickenInvoke(top, curBCI, opcode, statementIndex);
         if (opcode == INVOKESTATIC && quick instanceof InvokeStaticQuickNode invokeStaticQuickNode) {
             try (EspressoLanguage.DisableSingleStepping ignored = getLanguage().disableStepping()) {
@@ -2580,8 +2291,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert Bytecodes.isInvoke(opcode);
         InvokeQuickNode quick = (InvokeQuickNode) tryPatchQuick(curBCI, cpi -> getResolvedInvoke(opcode, cpi),
-                        resolvedInvoke -> 
-                        dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke));
+                        resolvedInvoke -> dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
         return quick;
     }
 
@@ -2639,7 +2349,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 // Might be racy, as read is not volatile, but redoing the work should be OK.
                 return currentQuick;
             }
-            BaseQuickNode invoke = dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke);
+            BaseQuickNode invoke = dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, false);
             nodes[nodeIndex] = currentQuick.replace(invoke);
             return invoke;
         });
@@ -2656,6 +2366,21 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 }
             }
         });
+    }
+
+    // region quickenForeign
+    public int quickenGetField(final VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex, Field field) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert opcode == GETFIELD;
+        BaseQuickNode getField = tryPatchQuick(curBCI, () -> new QuickenedGetFieldNode(top, curBCI, statementIndex, field));
+        return getField.execute(frame, false) - Bytecodes.stackEffectOf(opcode);
+    }
+
+    public int quickenPutField(VirtualFrame frame, int top, int curBCI, int opcode, int statementIndex, Field field) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert opcode == PUTFIELD;
+        BaseQuickNode putField = tryPatchQuick(curBCI, () -> new QuickenedPutFieldNode(top, curBCI, field, statementIndex));
+        return putField.execute(frame, false) - Bytecodes.stackEffectOf(opcode);
     }
 
     private int quickenArrayLength(VirtualFrame frame, int top, int curBCI) {
@@ -2730,54 +2455,32 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     // endregion quickenForeign
 
-    private InvokeQuickNode dispatchQuickened(int top, int curBCI, int opcode, int statementIndex, ResolvedInvoke resolvedInvoke) {
+    private InvokeQuickNode dispatchQuickened(int top, int curBCI, int opcode, int statementIndex, ResolvedInvoke resolvedInvoke, boolean allowBytecodeInlining) {
         ResolvedCall<Klass, Method, Field> resolvedCall = resolvedInvoke.resolvedCall();
         Method resolved = resolvedCall.getResolvedMethod();
         CallKind callKind = resolvedCall.getCallKind();
 
-        if (resolved.getNameAsString().equals("array_apply") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")){
-            if (instOperandArrayElementTypes[curBCI] != null) {
-                assert instOperandArrayElementTypes[curBCI].length == 2;
-                return new InvokeArrayApplyNode(resolved, top, curBCI, instOperandArrayElementTypes[curBCI][0]);
-            }
-        } else if (resolved.getNameAsString().equals("array_update") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")){
-            if (instOperandArrayElementTypes[curBCI] != null) {
-                assert instOperandArrayElementTypes[curBCI].length == 3;
-                return new InvokeArrayUpdateNode(resolved, top, curBCI, instOperandArrayElementTypes[curBCI][0]);
-            }
-        } else if (resolved.getNameAsString().equals("array_length") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaRunTime$")){
-            if (instOperandArrayElementTypes[curBCI] != null) {
-                assert instOperandArrayElementTypes[curBCI].length == 1;
-                return new InvokeArrayLengthNode(resolved, top, curBCI, instOperandArrayElementTypes[curBCI][0]);
-            }
-        } else if (resolved.getNameAsString().equals("reifiedAsInstanceOf") && resolved.getDeclaringKlass().getNameAsString().equals("scala/runtime/ScalaReifiedRuntime$")) {
-            if (instOperandTypes[curBCI] != null) {
-                assert instOperandTypes[curBCI].length == 1;
-                return new InvokeUpcastNode(resolved, top, curBCI, instOperandTypes[curBCI][0]);
+        // Skip inlined nodes if instrumentation is live.
+        // Lock must be owned for correctness.
+        assert lockIsHeld();
+        boolean tryBytecodeLevelInlining = this.instrumentation == null && allowBytecodeInlining;
+        if (tryBytecodeLevelInlining) {
+            InlinedMethodNode node = InlinedMethodNode.createFor(resolvedCall, top, opcode, curBCI, statementIndex);
+            if (node != null) {
+                return node;
             }
         }
-
-        assert lockIsHeld();
 
         if (resolved.isPolySignatureIntrinsic()) {
             return new InvokeHandleNode(resolved, resolvedInvoke.invoker(), top, curBCI);
         } else {
             // @formatter:off
-            if (this.instOperandTypes[curBCI] != null || this.invokeReturnTypes[curBCI] != 0) {
-                return switch (callKind) {
-                    case STATIC          -> new InvokeStaticQuickNode(resolved, top, curBCI, this.instOperandTypes[curBCI], this.invokeReturnTypes[curBCI]);
-                    case ITABLE_LOOKUP   -> new InvokeInterfaceQuickNode(resolved, top, curBCI, this.instOperandTypes[curBCI], this.invokeReturnTypes[curBCI]);
-                    case VTABLE_LOOKUP   -> new InvokeVirtualQuickNode(resolved, top, curBCI, this.instOperandTypes[curBCI], this.invokeReturnTypes[curBCI]);
-                    case DIRECT          -> new InvokeSpecialQuickNode(resolved, top, curBCI, this.instOperandTypes[curBCI], this.invokeReturnTypes[curBCI]);
-                };
-            } else {
-                return switch (callKind) {
-                    case STATIC          -> new InvokeStaticQuickNode(resolved, top, curBCI);
-                    case ITABLE_LOOKUP   -> new InvokeInterfaceQuickNode(resolved, top, curBCI);
-                    case VTABLE_LOOKUP   -> new InvokeVirtualQuickNode(resolved, top, curBCI);
-                    case DIRECT          -> new InvokeSpecialQuickNode(resolved, top, curBCI);
-                };
-            }
+            return switch (callKind) {
+                case STATIC          -> new InvokeStaticQuickNode(resolved, top, curBCI);
+                case ITABLE_LOOKUP   -> new InvokeInterfaceQuickNode(resolved, top, curBCI);
+                case VTABLE_LOOKUP   -> new InvokeVirtualQuickNode(resolved, top, curBCI);
+                case DIRECT          -> new InvokeSpecialQuickNode(resolved, top, curBCI);
+            };
             // @formatter:on
         }
     }
@@ -3012,61 +2715,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     // region Field read/write
 
-    private void putFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int top, StaticObject receiver, byte typeParamKind, int typeParamIdx, boolean isVolatile) {
-        CompilerAsserts.partialEvaluationConstant(typeHeader);
-        CompilerAsserts.partialEvaluationConstant(top);
-        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
-        CompilerAsserts.partialEvaluationConstant(isVolatile);
-        byte alternatedType = typeHeader;
-        if (alternatedType == 'L' && typeParamKind == TypeHints.CLASS_TYPE_PARAM && typeParamIdx >= 0) {
-            alternatedType = this.reifiedClassTypeParams[typeParamIdx];
-        }
-        CompilerAsserts.partialEvaluationConstant(alternatedType);
-        ReifiedDebugCounter.incPutfieldToPrimitive(typeHeader, alternatedType);
-        switch (alternatedType) {
-            case 'Z':
-                boolean booleanValue = stackIntToBoolean(popInt(frame, top - 1));
-                if (isVolatile) specializedLinkedField.setBooleanVolatile(receiver, booleanValue); else specializedLinkedField.setBoolean(receiver, booleanValue);
-                break;
-            case 'B':
-                byte byteValue = (byte) popInt(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setByteVolatile(receiver, byteValue); else specializedLinkedField.setByte(receiver, byteValue);
-                break;
-            case 'C':
-                char charValue = (char) popInt(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setCharVolatile(receiver, charValue); else specializedLinkedField.setChar(receiver, charValue);
-                break;
-            case 'S':
-                short shortValue = (short) popInt(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setShortVolatile(receiver, shortValue); else specializedLinkedField.setShort(receiver, shortValue);
-                break;
-            case 'I':
-                int intValue = popInt(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setIntVolatile(receiver, intValue); else specializedLinkedField.setInt(receiver, intValue);
-                break;
-            case 'D':
-                double doubleValue = popDouble(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setDoubleVolatile(receiver, doubleValue); else specializedLinkedField.setDouble(receiver, doubleValue);
-                break;
-            case 'F':
-                float floatValue = popFloat(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setFloatVolatile(receiver, floatValue); else specializedLinkedField.setFloat(receiver, floatValue);
-                break;
-            case 'J':
-                long longValue = popLong(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setLongVolatile(receiver, longValue); else specializedLinkedField.setLong(receiver, longValue);
-                break;
-            case '[': // fall through
-            case 'L':
-                StaticObject value = popObject(frame, top - 1);
-                if (isVolatile) specializedLinkedField.setObjectVolatile(receiver, value); else specializedLinkedField.setObject(receiver, value);
-                break;
-            default:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                throw EspressoError.shouldNotReachHere("unexpected kind");
-        }
-    }
-
     /**
      * Returns the stack effect (slot delta) that cannot be inferred solely from the bytecode. e.g.
      * GETFIELD always pops the receiver, but the (read) result size (1 or 2) is unknown.
@@ -3093,15 +2741,19 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (mode.isStatic()) {
             receiver = initializeAndGetStatics(field);
         } else {
-            receiver = nullCheck(popObject(frame, slot));
-        }
-
-        CompilerAsserts.partialEvaluationConstant(field.inSpecializedShape);
-
-        if (field.inSpecializedShape) {
-            LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
-            putFieldSpecialized(typeHeader, specializedLinkedField, frame, top, receiver, field.genericTypeParamKind, field.genericTypeParamIdx, field.isVolatile());
-            return -slotCount;
+            if (!noForeignObjects.isValid()) {
+                // Do not release the object, it might be read again in PutFieldNode
+                receiver = nullCheck(peekObject(frame, slot));
+                if (receiver.isForeignObject()) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    // Restore the receiver for quickening.
+                    putObject(frame, slot, receiver);
+                    return quickenPutField(frame, top, curBCI, opcode, statementIndex, field);
+                }
+                popObject(frame, slot); // clear the slot
+            } else {
+                receiver = nullCheck(popObject(frame, slot));
+            }
         }
 
         switch (typeHeader) {
@@ -3176,41 +2828,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         return -slotCount;
     }
 
-    private void getFieldSpecialized(byte typeHeader, LinkedField specializedLinkedField, VirtualFrame frame, int resultAt, StaticObject receiver, byte typeParamKind, int typeParamIdx, boolean isVolatile) {
-        CompilerAsserts.partialEvaluationConstant(typeHeader);
-        CompilerAsserts.partialEvaluationConstant(resultAt);
-        CompilerAsserts.partialEvaluationConstant(typeParamIdx);
-        CompilerAsserts.partialEvaluationConstant(isVolatile);
-        byte alternatedType = typeHeader;
-        if (alternatedType == 'L' && typeParamKind == TypeHints.CLASS_TYPE_PARAM && typeParamIdx >= 0) {
-            alternatedType = this.reifiedClassTypeParams[typeParamIdx];
-        }
-        if (typeHeader == 'D' || typeHeader == 'J') {
-            resultAt = resultAt + 1;
-        }
-        CompilerAsserts.partialEvaluationConstant(alternatedType);
-        ReifiedDebugCounter.incGetfieldToPrimitive(typeHeader, alternatedType);
-        switch (alternatedType) {
-            case 'Z' : putInt(frame, resultAt, (isVolatile ? specializedLinkedField.getBooleanVolatile(receiver) : specializedLinkedField.getBoolean(receiver)) ? 1 : 0); break;
-            case 'B' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getByteVolatile(receiver) : specializedLinkedField.getByte(receiver));      break;
-            case 'C' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getCharVolatile(receiver) : specializedLinkedField.getChar(receiver));      break;
-            case 'S' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getShortVolatile(receiver) : specializedLinkedField.getShort(receiver));     break;
-            case 'I' : putInt(frame, resultAt, isVolatile ? specializedLinkedField.getIntVolatile(receiver) : specializedLinkedField.getInt(receiver));       break;
-            case 'D' : frame.setDoubleStatic(resultAt, isVolatile ? specializedLinkedField.getDoubleVolatile(receiver) : specializedLinkedField.getDouble(receiver)); break;
-            case 'F' : putFloat(frame, resultAt, isVolatile ? specializedLinkedField.getFloatVolatile(receiver) : specializedLinkedField.getFloat(receiver));   break;
-            case 'J' : frame.setLongStatic(resultAt, isVolatile ? specializedLinkedField.getLongVolatile(receiver) : specializedLinkedField.getLong(receiver));     break;
-            case '[' : // fall through
-            case 'L' : {
-                StaticObject value = (StaticObject) (isVolatile ? specializedLinkedField.getObjectVolatile(receiver) : specializedLinkedField.getObject(receiver));
-                putObject(frame, resultAt, value);
-                break;
-            }
-            default:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                throw EspressoError.shouldNotReachHere("unexpected kind");
-        }
-    }
-
     /**
      * Returns the stack effect (slot delta) that cannot be inferred solely from the bytecode. e.g.
      * PUTFIELD always pops the receiver, but the result size (1 or 2) is unknown.
@@ -3234,7 +2851,19 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         if (mode.isStatic()) {
             receiver = initializeAndGetStatics(field);
         } else {
-            receiver = nullCheck(popObject(frame, slot));
+            if (!noForeignObjects.isValid()) {
+                // Do not release the object yet, it might be read again in GetFieldNode
+                receiver = nullCheck(peekObject(frame, slot));
+                if (receiver.isForeignObject()) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    // Restore the receiver for quickening.
+                    putObject(frame, slot, receiver);
+                    return quickenGetField(frame, top, curBCI, opcode, statementIndex, field);
+                }
+                popObject(frame, slot); // clear the slot
+            } else {
+                receiver = nullCheck(popObject(frame, slot));
+            }
         }
 
         if (instrumentation != null) {
@@ -3244,22 +2873,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         int resultAt = mode.isStatic() ? top : (top - 1);
         // @formatter:off
         byte typeHeader = field.getType().byteAt(0);
-
-        if (typeHeader == 'B' && field.indexAsTypeParam >= 0) {
-            byte result = reifiedClassTypeParams[field.indexAsTypeParam];
-            CompilerAsserts.partialEvaluationConstant(result);
-            putInt(frame, resultAt, result);
-            return 1; // slotCount for byte is 1
-        }
-
-        CompilerAsserts.partialEvaluationConstant(field.inSpecializedShape);
-        if (field.inSpecializedShape) {
-            LinkedField specializedLinkedField = field.getSpecializedLinkedField(this.reifiedClassTypeParams);
-            getFieldSpecialized(typeHeader, specializedLinkedField, frame, resultAt, receiver, field.genericTypeParamKind, field.genericTypeParamIdx, field.isVolatile());
-            int slotCount = (typeHeader == 'J' || typeHeader == 'D') ? 2 : 1;
-            return slotCount;
-        }
-
         switch (typeHeader) {
             case 'Z' : putInt(frame, resultAt, InterpreterToVM.getFieldBoolean(receiver, field) ? 1 : 0); break;
             case 'B' : putInt(frame, resultAt, InterpreterToVM.getFieldByte(receiver, field));      break;
@@ -3600,44 +3213,6 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
             return false;
         }
         byte[] originalCode = getMethodVersion().getOriginalCode();
-        /*
-         * originalCode.length < TrivialMethodSize is checked in the constructor because this method
-         * is called from a compiler thread where the context is not accessible.
-         */
-        BytecodeStream stream = new BytecodeStream(originalCode);
-        for (int bci = 0; bci < stream.endBCI(); bci = stream.nextBCI(bci)) {
-            int bc = stream.currentBC(bci);
-            // Trivial methods should be leaves.
-            if (Bytecodes.isInvoke(bc)) {
-                return false;
-            }
-            if (Bytecodes.LOOKUPSWITCH == bc || Bytecodes.TABLESWITCH == bc) {
-                return false;
-            }
-            if (Bytecodes.MONITORENTER == bc || Bytecodes.MONITOREXIT == bc) {
-                return false;
-            }
-            if (Bytecodes.ANEWARRAY == bc || MULTIANEWARRAY == bc) {
-                // The allocated array is Arrays.fill-ed with StaticObject.NULL but loops are not
-                // allowed in trivial methods.
-                return false;
-            }
-            if (Bytecodes.isBranch(bc)) {
-                int dest = stream.readBranchDest(bci);
-                if (dest <= bci) {
-                    // Back-edge (probably a loop) but loops are not allowed in trivial methods.
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    public static boolean isTrivialBytecodes(MethodVersion methodVersion) {
-        if (methodVersion.getMethod().isSynchronized()) {
-            return false;
-        }
-        byte[] originalCode = methodVersion.getOriginalCode();
         /*
          * originalCode.length < TrivialMethodSize is checked in the constructor because this method
          * is called from a compiler thread where the context is not accessible.
