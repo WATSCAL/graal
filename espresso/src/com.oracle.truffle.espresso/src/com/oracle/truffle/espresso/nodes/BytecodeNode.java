@@ -1351,7 +1351,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
                     case NEW         :
                         Klass klass = resolveType(NEW, bs.readCPI2(curBCI));
-                        putObject(frame, top, newReferenceObject(klass)); break;
+                        putObject(frame, top, newReferenceObject(frame, curBCI, klass)); break;
                     case NEWARRAY    :
                         byte jvmPrimitiveType = bs.readByte(curBCI);
                         int length = popInt(frame, top - 1);
@@ -1766,7 +1766,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         return allocTypeArgs;
     }
 
-    private StaticObject newReferenceObject(Klass klass) {
+    private StaticObject newReferenceObject(VirtualFrame frame, int curBCI, Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
         ObjectKlass objKlass = (ObjectKlass) klass;
@@ -1807,7 +1807,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
                 // another thread beat us
                 return nodes[cpi];
             } else {
-                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
+                BaseQuickNode newNode = insert(dispatchQuickened(top, curBCI, originalOpcode, statementIndex, resolvedInvoke, false));
                 nodes[cpi] = newNode;
                 return newNode;
             }
@@ -2331,7 +2331,7 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert Bytecodes.isInvoke(opcode);
         InvokeQuickNode quick = (InvokeQuickNode) tryPatchQuick(curBCI, cpi -> getResolvedInvoke(opcode, cpi),
-                        resolvedInvoke -> dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, getMethod().getContext().getEspressoEnv().bytecodeLevelInlining));
+                        resolvedInvoke -> dispatchQuickened(top, curBCI, opcode, statementIndex, resolvedInvoke, false));
         return quick;
     }
 

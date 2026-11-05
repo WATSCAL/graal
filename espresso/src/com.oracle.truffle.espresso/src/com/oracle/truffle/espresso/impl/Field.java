@@ -139,11 +139,7 @@ public class Field extends Member<Type> implements FieldRef, FieldAccess<Klass, 
     }
 
     public final LinkedField getSpecializedLinkedField(byte[] classTypeParams) {
-        int specializationIdx = holder.linkedKlass.getSpecializationIndexReadOnly(classTypeParams);
-        CompilerAsserts.partialEvaluationConstant(specializationIdx);
-        LinkedField ret = holder.linkedKlass.getSpecializedInstanceFieldsAt(specializationIdx)[linkedFieldIdx];
-        CompilerAsserts.partialEvaluationConstant(ret);
-        return ret;
+        return linkedField;
     }
 
     @Override

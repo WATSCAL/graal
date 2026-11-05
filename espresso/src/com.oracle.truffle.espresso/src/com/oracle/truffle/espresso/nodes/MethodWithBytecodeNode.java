@@ -84,8 +84,6 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
 
     @Child AbstractInstrumentableBytecodeNode bytecodeNode;
     private final Method.MethodVersion methodVersion;
-    private final FrameDescriptor frameDescriptor;
-    private final boolean trivialBytecode;
     private final boolean hasReceiver;
     private final boolean hasStaticForwarderReceiver;
 
@@ -101,8 +99,6 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         super(bytecodeNode.getMethodVersion());
         this.bytecodeNode = bytecodeNode;
         this.methodVersion = bytecodeNode.getMethodVersion();
-        this.frameDescriptor = bytecodeNode.getFrameDescriptor();
-        this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
         this.hasStaticForwarderReceiver = false;
         this.hasReceiver = methodVersion.getMethod().hasReceiver();
         this.methodTypeParamCount = 0;
@@ -114,7 +110,6 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         super(methodVersion);
         Method method = methodVersion.getMethod();
         this.methodVersion = methodVersion;
-        this.trivialBytecode = BytecodeNode.isTrivialBytecodes(methodVersion);
         CompilerAsserts.neverPartOfCompilation();
 
         MethodParameterTypeAttribute methodParameterTypeAttribute = method.getMethodParameterTypeAttribute();
@@ -131,15 +126,13 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         int classTypeParamCountForMethod = this.hasReceiver ? methodVersion.getDeclaringKlass().getLinkedKlass().allTypeParamNum : 0;
 
         if (methodTypeParamCount > 0 || classTypeParamCountForMethod > 0 || this.analysis != null) {
-            this.bytecodeNode = null;
-            this.frameDescriptor = BytecodeNode.calcFrameDescriptor(methodVersion);
+            this.bytecodeNode = new BytecodeNode(methodVersion);
             this.classTypeParamCount = classTypeParamCountForMethod;
             this.specializations = new BytecodeNode[0];
             this.cacheKeys = new byte[0][];
         } else {
             BytecodeNode t = new BytecodeNode(methodVersion);
             this.bytecodeNode = t;
-            this.frameDescriptor = t.getFrameDescriptor();
             this.classTypeParamCount = 0;
         }
     }
@@ -155,10 +148,6 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
             accessors[i] = declaringKlass.getConstantPool().resolvedMethodAt(declaringKlass, methodRefCpis[i]);
         }
         return accessors;
-    }
-
-    public FrameDescriptor getFrameDescriptor() {
-        return frameDescriptor;
     }
 
     @Override
@@ -288,11 +277,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     @SuppressFBWarnings(value = "BC_IMPOSSIBLE_INSTANCEOF", justification = "bytecodeNode may be replaced by instrumentation with a wrapper node")
     boolean isTrivial() {
         // Instrumented nodes are not trivial.
-        if (bytecodeNode != null) {
-            return !(bytecodeNode instanceof WrapperNode) && bytecodeNode.isTrivial();
-        } else {
-            return this.trivialBytecode;
-        }
+        return !(bytecodeNode instanceof WrapperNode) && bytecodeNode.isTrivial();
     }
 
     @Override
