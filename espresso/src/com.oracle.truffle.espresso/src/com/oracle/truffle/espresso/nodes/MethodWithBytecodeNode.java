@@ -82,7 +82,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
 
     static private final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    @Child AbstractInstrumentableBytecodeNode bytecodeNode;
+    @Child BytecodeNode bytecodeNode;
     private final Method.MethodVersion methodVersion;
     private final boolean hasReceiver;
     private final boolean hasStaticForwarderReceiver;
@@ -277,7 +277,7 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
     @SuppressFBWarnings(value = "BC_IMPOSSIBLE_INSTANCEOF", justification = "bytecodeNode may be replaced by instrumentation with a wrapper node")
     boolean isTrivial() {
         // Instrumented nodes are not trivial.
-        return !(bytecodeNode instanceof WrapperNode) && bytecodeNode.isTrivial();
+        return bytecodeNode.isTrivial();
     }
 
     public FrameDescriptor getFrameDescriptor() {
