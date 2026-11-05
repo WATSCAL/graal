@@ -301,6 +301,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.espresso.classfile.attributes.reified.BCNewTypeArgsAttribute;
 import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.analysis.liveness.LivenessAnalysis;
 import com.oracle.truffle.espresso.bytecode.MapperBCI;
@@ -465,6 +466,12 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
 
     private final MethodVersion methodVersion;
 
+
+    @CompilationFinal(dimensions = 2)
+    private final int[][] allocTypeArgSlotIndices;
+    @CompilationFinal(dimensions = 2)
+    private final byte[][] resolvedAllocTypeArgs;
+
     @CompilationFinal(dimensions = 1) private final byte[] code;
     private final int returnValueBci;
     private final int throwValueBci;
@@ -481,6 +488,19 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         this.code = customCode;
         this.bs = new BytecodeStream(code);
         this.stackOverflowErrorInfo = method.getSOEHandlerInfo();
+        
+        this.allocTypeArgSlotIndices = new int[this.bs.endBCI()][];
+        this.resolvedAllocTypeArgs = new byte[this.bs.endBCI()][];
+        BCNewTypeArgsAttribute allocTypeArgsAttr = method.getBCNewTypeArgsAttribute();
+        if (allocTypeArgsAttr != null) {
+            for (BCNewTypeArgsAttribute.Entry entry : allocTypeArgsAttr.getEntires()) {
+                this.allocTypeArgSlotIndices[entry.bcOffset()] = entry.localSlotIndices();
+                //System.out.println(method.getNameAsString() + " " + entry.bcOffset() + ": ");
+                //for (int v : entry.localSlotIndices()) System.out.print(v + " ");
+                //System.out.print('\n');
+            }
+        }
+        
         this.frameDescriptor = createFrameDescriptor(methodVersion.getMaxLocals(), methodVersion.getMaxStackSize());
         this.noForeignObjects = Truffle.getRuntime().createAssumption("noForeignObjects");
         this.implicitExceptionProfile = false;
@@ -1732,10 +1752,30 @@ public final class BytecodeNode extends AbstractInstrumentableBytecodeNode imple
         enterImplicitExceptionProfile();
     }
 
+    private byte[] getAllocTypeArgs(VirtualFrame frame, int curBCI) {
+        if (resolvedAllocTypeArgs[curBCI] != null) {
+            return resolvedAllocTypeArgs[curBCI];
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        int len = this.allocTypeArgSlotIndices[curBCI].length;
+        byte[] allocTypeArgs = new byte[len];
+        for (int i = 0; i < len; ++i) {
+            allocTypeArgs[i] = (byte) getLocalInt(frame, this.allocTypeArgSlotIndices[curBCI][i]);
+        }
+        resolvedAllocTypeArgs[curBCI] = allocTypeArgs;
+        return allocTypeArgs;
+    }
+
     private StaticObject newReferenceObject(Klass klass) {
         assert !klass.isPrimitive() : "Verifier guarantee";
         GuestAllocator.AllocationChecks.checkCanAllocateNewReference(getMethod().getMeta(), klass, true, this);
-        return getAllocator().createNew((ObjectKlass) klass);
+        ObjectKlass objKlass = (ObjectKlass) klass;
+        if (objKlass.getLinkedKlass().allTypeParamNum > 0) {
+            assert this.allocTypeArgSlotIndices[curBCI] != null && this.allocTypeArgSlotIndices[curBCI].length == objKlass.getLinkedKlass().allTypeParamNum;
+            return getAllocator().createNewSpecialized(objKlass, getAllocTypeArgs(frame, curBCI));
+        } else {
+            return getAllocator().createNew(objKlass);
+        }
     }
 
     private StaticObject newPrimitiveArray(byte jvmPrimitiveType, int length) {

@@ -124,15 +124,9 @@ public final class GuestAllocator implements LanguageAccess {
         assert AllocationChecks.canAllocateNewReference(klass);
         assert klass != klass.getMeta().java_lang_Class;
         klass.safeInitialize();
-        LinkedKlass lkKlass = klass.getLinkedKlass();
-        int specializationIdx = lkKlass.getSpecializationIndex(this.language, classTypeArgs);
-	CompilerAsserts.partialEvaluationConstant(specializationIdx);
-        StaticShape<StaticObject.StaticObjectFactory> reifiedShape = lkKlass.getSpecializedShapeAt(specializationIdx);
-	CompilerAsserts.partialEvaluationConstant(reifiedShape);
-        byte[] reifiedTypes = lkKlass.getSpecializedKeyAt(specializationIdx);
-        StaticObject newSpecializedObj = reifiedShape.getFactory().create(klass, false, reifiedTypes);
-        initInstanceFields(newSpecializedObj, klass);
-        return trackAllocation(klass, newSpecializedObj);
+        StaticObject newObj = klass.getLinkedKlass().getShape(false).getFactory().create(klass, false, classTypeArgs);
+        initInstanceFields(newObj, klass);
+        return trackAllocation(klass, newObj);
     }
 
     /**

@@ -33,6 +33,8 @@ import com.oracle.truffle.espresso.classfile.ImmutableConstantPool;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
 import com.oracle.truffle.espresso.classfile.ParserMethod;
 import com.oracle.truffle.espresso.classfile.attributes.Attribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.ClassTypeParamListAttribute;
+import com.oracle.truffle.espresso.classfile.attributes.reified.TraitTypeParamListAttribute;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
 import com.oracle.truffle.espresso.classfile.descriptors.Type;
@@ -49,6 +51,9 @@ public final class LinkedKlass {
 
     // Linked structural references.
     private final LinkedKlass superKlass;
+
+    public final int curLevelTypeParamNum;
+    public final int allTypeParamNum;
 
     @CompilationFinal(dimensions = 1) //
     private final LinkedKlass[] interfaces;
@@ -100,6 +105,13 @@ public final class LinkedKlass {
             linkedMethods[i] = new LinkedMethod(parserMethod);
         }
         this.methods = linkedMethods;
+
+        ClassTypeParamListAttribute typeParamList = (ClassTypeParamListAttribute) this.parserKlass.getAttribute(ClassTypeParamListAttribute.NAME);
+        TraitTypeParamListAttribute traitTypeParamList = (TraitTypeParamListAttribute) this.parserKlass.getAttribute(TraitTypeParamListAttribute.NAME);
+        this.curLevelTypeParamNum = Modifier.isInterface(getFlags()) ?
+                                        (traitTypeParamList != null ? traitTypeParamList.getTypeParamAccessorMethodRefs().length : 0) :
+                                        (typeParamList != null ? typeParamList.getTypeParams().length : 0);
+        this.allTypeParamNum = superKlass != null ? superKlass.allTypeParamNum + this.curLevelTypeParamNum : this.curLevelTypeParamNum;
     }
 
     public static LinkedKlass create(EspressoLanguage language, ParserKlass parserKlass, LinkedKlass superKlass, LinkedKlass[] interfaces) {
