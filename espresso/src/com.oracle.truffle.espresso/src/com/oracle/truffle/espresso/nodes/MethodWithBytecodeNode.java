@@ -280,6 +280,10 @@ final class MethodWithBytecodeNode extends EspressoInstrumentableRootNodeImpl {
         return !(bytecodeNode instanceof WrapperNode) && bytecodeNode.isTrivial();
     }
 
+    public FrameDescriptor getFrameDescriptor() {
+        return bytecodeNode.getFrameDescriptor();
+    }
+
     @Override
     public boolean hasTag(Class<? extends Tag> tag) {
         if (tag == StandardTags.RootTag.class) {
