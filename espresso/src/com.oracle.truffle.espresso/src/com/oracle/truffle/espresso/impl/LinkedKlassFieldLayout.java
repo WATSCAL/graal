@@ -22,24 +22,22 @@
  */
 package com.oracle.truffle.espresso.impl;
 
-import static com.oracle.truffle.espresso.classfile.Constants.ACC_HIDDEN;
-
-import static java.util.Map.entry;
-
 import java.util.HashSet;
 import java.util.Map;
+import static java.util.Map.entry;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import com.oracle.truffle.espresso.meta.EspressoError;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.staticobject.StaticShape;
 import com.oracle.truffle.api.staticobject.StaticShape.Builder;
 import com.oracle.truffle.espresso.EspressoLanguage;
 import com.oracle.truffle.espresso.classfile.Constants;
+import static com.oracle.truffle.espresso.classfile.Constants.ACC_HIDDEN;
 import com.oracle.truffle.espresso.classfile.JavaVersion.VersionRange;
 import com.oracle.truffle.espresso.classfile.ParserField;
 import com.oracle.truffle.espresso.classfile.ParserKlass;
+import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 import com.oracle.truffle.espresso.classfile.attributes.reified.TypeHints;
 import com.oracle.truffle.espresso.classfile.descriptors.Name;
 import com.oracle.truffle.espresso.classfile.descriptors.Symbol;
@@ -48,7 +46,6 @@ import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Names;
 import com.oracle.truffle.espresso.descriptors.EspressoSymbols.Types;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject;
 import com.oracle.truffle.espresso.runtime.staticobject.StaticObject.StaticObjectFactory;
-import com.oracle.truffle.espresso.classfile.attributes.reified.FieldTypeAttribute;
 
 final class LinkedKlassFieldLayout {
     final StaticShape<StaticObjectFactory> instanceShape;
@@ -72,18 +69,17 @@ final class LinkedKlassFieldLayout {
         private static void createAndRegisterLinkedField(ParserKlass parserKlass, ParserField parserField, int slot, int index, LinkedField.IdMode idMode, Builder builder, LinkedField[] linkedFields,
                                                         byte reifiedType) {
             LinkedField field = new LinkedField(parserField, slot, idMode);
-            Class<?> fieldType;
-            switch (reifiedType) {
-                case TypeHints.BYTE: fieldType = byte.class; break;
-                case TypeHints.CHAR: fieldType = char.class; break;
-                case TypeHints.DOUBLE: fieldType = double.class; break;
-                case TypeHints.FLOAT: fieldType = float.class; break;
-                case TypeHints.INT: fieldType = int.class; break;
-                case TypeHints.LONG: fieldType = long.class; break;
-                case TypeHints.SHORT: fieldType = short.class; break;
-                case TypeHints.BOOLEAN: fieldType = boolean.class; break;
-                default: fieldType = StaticObject.class; break; //can never be hidden fields
-            }
+            Class<?> fieldType = switch (reifiedType) {
+                case TypeHints.BYTE -> byte.class;
+                case TypeHints.CHAR -> char.class;
+                case TypeHints.DOUBLE -> double.class;
+                case TypeHints.FLOAT -> float.class;
+                case TypeHints.INT -> int.class;
+                case TypeHints.LONG -> long.class;
+                case TypeHints.SHORT -> short.class;
+                case TypeHints.BOOLEAN -> boolean.class;
+                default -> StaticObject.class;
+            };
             builder.property(field, fieldType, storeAsFinal(parserKlass, parserField));
             linkedFields[index] = field;
         }
